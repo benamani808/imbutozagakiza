@@ -369,6 +369,15 @@ export function useStore<T extends { id: string }>(key: StoreKey) {
     };
   }, [key]);
 
+  const add = useCallback(
+    (row: T) => {
+      const next = [row, ...readStore<T>(key)];
+      writeStore(key, next);
+      setRows(next);
+    },
+    [key],
+  );
+
   const remove = useCallback(
     (id: string) => {
       const next = readStore<T>(key).filter((r) => r.id !== id);
@@ -383,7 +392,7 @@ export function useStore<T extends { id: string }>(key: StoreKey) {
     setRows([]);
   }, [key]);
 
-  return { rows, remove, clear };
+  return { rows, add, remove, clear };
 }
 
 export const now = () => new Date().toLocaleString();
