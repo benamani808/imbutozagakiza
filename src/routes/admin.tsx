@@ -449,6 +449,23 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {tab === "prayers" ? (
           <div className="panel">
             <h3>Prayer requests</h3>
+            <QuickAdd
+              submitLabel="Add prayer request"
+              fields={[
+                { key: "name", label: "Name" },
+                { key: "email", label: "Email" },
+                { key: "request", label: "Request", area: true },
+              ]}
+              onAdd={(v) =>
+                prayers.add({
+                  id: uid(),
+                  name: v.name,
+                  email: v.email,
+                  request: v.request,
+                  date: now(),
+                })
+              }
+            />
             <Table
               head={["Name", "Email", "Request", "Date", ""]}
               rows={prayers.rows.map((p) => [
@@ -467,6 +484,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {tab === "newsletter" ? (
           <div className="panel">
             <h3>Newsletter subscribers</h3>
+            <QuickAdd
+              submitLabel="Add subscriber"
+              fields={[{ key: "email", label: "Email" }]}
+              onAdd={(v) => newsletter.add({ id: uid(), email: v.email, date: now() })}
+            />
             <Table
               head={["Email", "Date", ""]}
               rows={newsletter.rows.map((n) => [
@@ -483,8 +505,31 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {tab === "donations" ? (
           <div className="panel">
             <h3>Donations</h3>
+            <QuickAdd
+              submitLabel="Record donation"
+              fields={[
+                { key: "name", label: "Donor name" },
+                { key: "email", label: "Email" },
+                { key: "amount", label: "Amount" },
+                { key: "currency", label: "Currency", initial: draft.settings.currency },
+                { key: "reference", label: "Reference (optional)" },
+                { key: "status", label: "Status", initial: "completed" },
+              ]}
+              onAdd={(v) =>
+                donations.add({
+                  id: uid(),
+                  name: v.name,
+                  email: v.email,
+                  amount: Number(v.amount) || 0,
+                  currency: v.currency || draft.settings.currency,
+                  reference: v.reference || `MANUAL-${Date.now()}`,
+                  status: v.status || "completed",
+                  date: now(),
+                })
+              }
+            />
             <Table
-              head={["Name", "Email", "Amount", "Reference", "Status", "Date"]}
+              head={["Name", "Email", "Amount", "Reference", "Status", "Date", ""]}
               rows={donations.rows.map((d) => [
                 d.name,
                 d.email,
@@ -492,6 +537,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 d.reference,
                 d.status,
                 d.date,
+                <button key={d.id} className="btn btn-danger btn-small" onClick={() => donations.remove(d.id)}>
+                  Delete
+                </button>,
               ])}
             />
           </div>
