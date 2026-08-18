@@ -53,7 +53,7 @@ function HomePage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const nav = [
+  const nav: [string, string][] = [
     ["#home", "Home"],
     ["#about", "About Us"],
     ["#ministry", "Ministries"],
@@ -597,13 +597,13 @@ function HomePage() {
             <div>
               <h3>Quick Links</h3>
               <ul>
-                {[
+                {([
                   ["#about", "About Us"],
                   ["#sermons", "Sermons"],
                   ["#events", "Events"],
                   ["#donate", "Donate"],
                   ["#contact", "Contact Us"],
-                ].map(([hash, label]) => (
+                ] as [string, string][]).map(([hash, label]) => (
                   <li key={hash}>
                     <a
                       href={hash}
