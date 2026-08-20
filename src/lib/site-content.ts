@@ -5,7 +5,14 @@ import { useCallback, useEffect, useState } from "react";
 /* ------------------------------------------------------------------ */
 
 export type ValueItem = { id: string; icon: string; title: string; text: string };
-export type Leader = { id: string; icon: string; name: string; role: string; bio: string };
+export type Leader = {
+  id: string;
+  icon: string;
+  name: string;
+  role: string;
+  bio: string;
+  image?: string;
+};
 export type Ministry = { id: string; icon: string; title: string; text: string; items: string };
 export type EventItem = {
   id: string;
@@ -64,6 +71,7 @@ export type SiteContent = {
 
 export type Member = {
   id: string;
+  image?: string;
   name: string;
   email: string;
   phone: string;

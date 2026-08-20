@@ -5,6 +5,7 @@ import {
   GALLERY_CATEGORIES,
   SERMON_CATEGORIES,
   defaultContent,
+  now,
   readContent,
   uid,
   useSiteContent,
@@ -288,7 +289,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             blank={() => ({ id: uid(), icon: "👤", name: "New leader", role: "", bio: "" })}
             titleOf={(r) => r.name}
             fields={[
-              { key: "icon", label: "Icon (emoji)" },
+              { key: "image", label: "Photo", image: true },
+              { key: "icon", label: "Fallback icon (emoji)" },
               { key: "name", label: "Name" },
               { key: "role", label: "Role" },
               { key: "bio", label: "Short bio", area: true },
@@ -372,7 +374,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 label: "Category",
                 options: GALLERY_CATEGORIES.filter((c) => c.key !== "all").map((c) => [c.key, c.label]),
               },
-              { key: "image", label: "Image URL (optional)" },
+              { key: "image", label: "Photo", image: true },
               { key: "icon", label: "Fallback icon (emoji)" },
             ]}
           />
@@ -410,9 +412,42 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {tab === "members" ? (
           <div className="panel">
             <h3>Membership requests</h3>
+            <QuickAdd
+              submitLabel="Add member"
+              fields={[
+                { key: "image", label: "Member photo", image: true },
+                { key: "name", label: "Name" },
+                { key: "email", label: "Email" },
+                { key: "phone", label: "Phone" },
+                { key: "location", label: "Location" },
+                { key: "interest", label: "Interest" },
+              ]}
+              onAdd={(v) =>
+                members.add({
+                  id: uid(),
+                  image: (v["image"] ?? ""),
+                  name: (v["name"] ?? ""),
+                  email: (v["email"] ?? ""),
+                  phone: (v["phone"] ?? ""),
+                  location: (v["location"] ?? ""),
+                  interest: (v["interest"] ?? ""),
+                  date: now(),
+                })
+              }
+            />
             <Table
-              head={["Name", "Email", "Phone", "Location", "Interest", "Date", ""]}
+              head={["Photo", "Name", "Email", "Phone", "Location", "Interest", "Date", ""]}
               rows={members.rows.map((m) => [
+                m.image ? (
+                  <img
+                    key={`${m.id}-img`}
+                    src={m.image}
+                    alt={m.name}
+                    style={{ width: 44, height: 44, objectFit: "cover", borderRadius: "50%" }}
+                  />
+                ) : (
+                  "—"
+                ),
                 m.name,
                 m.email,
                 m.phone,
@@ -459,9 +494,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onAdd={(v) =>
                 prayers.add({
                   id: uid(),
-                  name: v.name,
-                  email: v.email,
-                  request: v.request,
+                  name: (v["name"] ?? ""),
+                  email: (v["email"] ?? ""),
+                  request: (v["request"] ?? ""),
                   date: now(),
                 })
               }
@@ -487,7 +522,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <QuickAdd
               submitLabel="Add subscriber"
               fields={[{ key: "email", label: "Email" }]}
-              onAdd={(v) => newsletter.add({ id: uid(), email: v.email, date: now() })}
+              onAdd={(v) => newsletter.add({ id: uid(), email: (v["email"] ?? ""), date: now() })}
             />
             <Table
               head={["Email", "Date", ""]}
@@ -518,12 +553,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onAdd={(v) =>
                 donations.add({
                   id: uid(),
-                  name: v.name,
-                  email: v.email,
-                  amount: Number(v.amount) || 0,
-                  currency: v.currency || draft.settings.currency,
-                  reference: v.reference || `MANUAL-${Date.now()}`,
-                  status: v.status || "completed",
+                  name: (v["name"] ?? ""),
+                  email: (v["email"] ?? ""),
+                  amount: Number((v["amount"] ?? "")) || 0,
+                  currency: (v["currency"] ?? "") || draft.settings.currency,
+                  reference: (v["reference"] ?? "") || `MANUAL-${Date.now()}`,
+                  status: (v["status"] ?? "") || "completed",
                   date: now(),
                 })
               }
@@ -760,6 +795,7 @@ type FieldDef<T> = {
   label: string;
   area?: boolean;
   checkbox?: boolean;
+  image?: boolean;
   options?: [string, string][];
 };
 
@@ -829,6 +865,17 @@ function ListEditor<T extends { id: string }>({
                   </div>
                 );
               }
+              if (f.image) {
+                return (
+                  <div className="field" key={f.key} style={{ gridColumn: "1 / -1" }}>
+                    <label>{f.label}</label>
+                    <ImagePicker
+                      value={String(value ?? "")}
+                      onChange={(v) => patch(row.id, f.key, v)}
+                    />
+                  </div>
+                );
+              }
               if (f.options) {
                 return (
                   <div className="field" key={f.key}>
@@ -875,5 +922,84 @@ function ListEditor<T extends { id: string }>({
         + Add
       </button>
     </div>
+  );
+}
+
+
+function ImagePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const pick = (file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result ?? ""));
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div style={{ display: "flex", gap: ".6rem", alignItems: "center", flexWrap: "wrap" }}>
+      {value ? (
+        <img
+          src={value}
+          alt="preview"
+          style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }}
+        />
+      ) : null}
+      <input type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0])} />
+      <input
+        placeholder="or paste an image URL"
+        value={value.startsWith("data:") ? "" : value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ flex: 1, minWidth: 180 }}
+      />
+      {value ? (
+        <button className="btn btn-outline btn-small" onClick={() => onChange("")}>
+          Remove
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+type QuickField = { key: string; label: string; area?: boolean; image?: boolean; initial?: string };
+
+function QuickAdd({
+  fields,
+  submitLabel,
+  onAdd,
+}: {
+  fields: QuickField[];
+  submitLabel: string;
+  onAdd: (values: Record<string, string>) => void;
+}) {
+  const initial = () =>
+    Object.fromEntries(fields.map((f) => [f.key, f.initial ?? ""])) as Record<string, string>;
+  const [values, setValues] = useState<Record<string, string>>(initial);
+
+  const set = (key: string, v: string) => setValues((s) => ({ ...s, [key]: v }));
+
+  return (
+    <form
+      className="field-grid"
+      onSubmit={(e: FormEvent) => {
+        e.preventDefault();
+        onAdd(values);
+        setValues(initial());
+      }}
+    >
+      {fields.map((f) =>
+        f.image ? (
+          <div className="field" key={f.key} style={{ gridColumn: "1 / -1" }}>
+            <label>{f.label}</label>
+            <ImagePicker value={values[f.key] ?? ""} onChange={(v) => set(f.key, v)} />
+          </div>
+        ) : f.area ? (
+          <Area key={f.key} label={f.label} value={values[f.key] ?? ""} onChange={(v) => set(f.key, v)} />
+        ) : (
+          <Text key={f.key} label={f.label} value={values[f.key] ?? ""} onChange={(v) => set(f.key, v)} />
+        ),
+      )}
+      <button className="btn btn-primary" type="submit" style={{ gridColumn: "1 / -1" }}>
+        {submitLabel}
+      </button>
+    </form>
   );
 }

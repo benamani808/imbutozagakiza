@@ -401,3 +401,13 @@ body {
   .admin-nav { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); display: grid; }
   .admin-main { padding: 1.2rem; }
 }
+
+.leader-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 0.75rem;
+  display: block;
+  border: 3px solid var(--brand-gold, #d4af37);
+}
