@@ -425,12 +425,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onAdd={(v) =>
                 members.add({
                   id: uid(),
-                  image: v.image,
-                  name: v.name,
-                  email: v.email,
-                  phone: v.phone,
-                  location: v.location,
-                  interest: v.interest,
+                  image: (v["image"] ?? ""),
+                  name: (v["name"] ?? ""),
+                  email: (v["email"] ?? ""),
+                  phone: (v["phone"] ?? ""),
+                  location: (v["location"] ?? ""),
+                  interest: (v["interest"] ?? ""),
                   date: now(),
                 })
               }
@@ -494,9 +494,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onAdd={(v) =>
                 prayers.add({
                   id: uid(),
-                  name: v.name,
-                  email: v.email,
-                  request: v.request,
+                  name: (v["name"] ?? ""),
+                  email: (v["email"] ?? ""),
+                  request: (v["request"] ?? ""),
                   date: now(),
                 })
               }
@@ -522,7 +522,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <QuickAdd
               submitLabel="Add subscriber"
               fields={[{ key: "email", label: "Email" }]}
-              onAdd={(v) => newsletter.add({ id: uid(), email: v.email, date: now() })}
+              onAdd={(v) => newsletter.add({ id: uid(), email: (v["email"] ?? ""), date: now() })}
             />
             <Table
               head={["Email", "Date", ""]}
@@ -553,12 +553,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onAdd={(v) =>
                 donations.add({
                   id: uid(),
-                  name: v.name,
-                  email: v.email,
-                  amount: Number(v.amount) || 0,
-                  currency: v.currency || draft.settings.currency,
-                  reference: v.reference || `MANUAL-${Date.now()}`,
-                  status: v.status || "completed",
+                  name: (v["name"] ?? ""),
+                  email: (v["email"] ?? ""),
+                  amount: Number((v["amount"] ?? "")) || 0,
+                  currency: (v["currency"] ?? "") || draft.settings.currency,
+                  reference: (v["reference"] ?? "") || `MANUAL-${Date.now()}`,
+                  status: (v["status"] ?? "") || "completed",
                   date: now(),
                 })
               }
