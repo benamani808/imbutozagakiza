@@ -71,6 +71,7 @@ export type SiteContent = {
 
 export type Member = {
   id: string;
+  image?: string;
   name: string;
   email: string;
   phone: string;

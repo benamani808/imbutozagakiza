@@ -242,7 +242,11 @@ function HomePage() {
             <div className="grid grid-3">
               {content.leaders.map((l) => (
                 <div className="card" key={l.id}>
-                  <span className="card-icon">{l.icon}</span>
+                  {l.image ? (
+                    <img className="leader-photo" src={l.image} alt={l.name} loading="lazy" />
+                  ) : (
+                    <span className="card-icon">{l.icon}</span>
+                  )}
                   <h3>{l.name}</h3>
                   <p className="role">{l.role}</p>
                   {l.bio ? <p>{l.bio}</p> : null}
