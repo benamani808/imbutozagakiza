@@ -223,6 +223,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         {tab === "general" ? (
           <>
             <div className="panel">
+              <h3>Logo</h3>
+              <ImagePicker
+                value={draft.settings.logo}
+                onChange={(v) => update("settings", { ...draft.settings, logo: v })}
+              />
+            </div>
+
+            <div className="panel">
               <h3>Hero</h3>
               <div className="field-grid">
                 <Text

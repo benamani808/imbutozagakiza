@@ -141,7 +141,11 @@ function HomePage() {
               scrollTo("#home");
             }}
           >
-            <span className="brand-mark">IZ</span>
+            {s.logo ? (
+              <img className="brand-logo" src={s.logo} alt={`${s.siteName} logo`} />
+            ) : (
+              <span className="brand-mark">IZ</span>
+            )}
             <span>
               <span className="brand-name">{s.siteName}</span>
               <br />

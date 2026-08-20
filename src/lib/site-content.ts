@@ -37,6 +37,7 @@ export type NewsItem = { id: string; date: string; title: string; text: string }
 export type SiteContent = {
   settings: {
     siteName: string;
+    logo: string;
     subtitle: string;
     verseText: string;
     verseRef: string;
@@ -109,6 +110,7 @@ export const uid = () => Math.random().toString(36).slice(2, 10);
 export const defaultContent: SiteContent = {
   settings: {
     siteName: "FAMILY IMBUTO Z'AGAKIZA",
+    logo: "",
     subtitle:
       "Spreading the good news of Jesus Christ, helping the needy, and building lives grounded in God.",
     verseText: "\u201cFor the Son of Man came to seek and to save the lost.\u201d",
