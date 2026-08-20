@@ -222,6 +222,7 @@ body {
   width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
   background: var(--brand); color: var(--gold); font-weight: 700;
 }
+.brand-logo { width: 42px; height: 42px; border-radius: 10px; object-fit: contain; background: transparent; }
 .brand-name { color: var(--brand); font-weight: 700; font-size: 1rem; line-height: 1.1; }
 .brand-sub { color: var(--ink-muted); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; }
 .nav-list { display: flex; align-items: center; gap: 1.1rem; list-style: none; margin: 0; padding: 0; }
