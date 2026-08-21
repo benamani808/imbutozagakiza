@@ -5,12 +5,12 @@ import {
   GALLERY_CATEGORIES,
   SERMON_CATEGORIES,
   defaultContent,
+  getAdminPassword,
   now,
-  readContent,
+  setAdminPassword,
   uid,
   useSiteContent,
   useStore,
-  writeContent,
   type Donation,
   type EventItem,
   type GalleryItem,
@@ -26,6 +26,7 @@ import {
   type Testimony,
   type ValueItem,
 } from "@/lib/site-content";
+import { verifyAdmin } from "@/lib/site.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -72,7 +73,7 @@ function AdminPage() {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    setAuthed(sessionStorage.getItem("fiz_admin") === "true");
+    setAuthed(sessionStorage.getItem("fiz_admin") === "true" && getAdminPassword() !== "");
     setChecked(true);
   }, []);
 
@@ -83,25 +84,35 @@ function AdminPage() {
 
 function Login({ onSuccess }: { onSuccess: () => void }) {
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const pass = String(f.get("password") ?? "");
-    const expected = readContent().settings.adminPassword;
-    if (String(f.get("username") ?? "") === "admin" && pass === expected) {
-      sessionStorage.setItem("fiz_admin", "true");
-      onSuccess();
-    } else {
-      setError("Username cyangwa Password ntabwo ari byo!");
+    setBusy(true);
+    setError("");
+    try {
+      const res = await verifyAdmin({ data: { password: pass } });
+      if (String(f.get("username") ?? "") === "admin" && res.ok) {
+        sessionStorage.setItem("fiz_admin", "true");
+        setAdminPassword(pass);
+        onSuccess();
+      } else {
+        setError("Username cyangwa Password ntabwo ari byo!");
+      }
+    } catch {
+      setError("Could not reach the server. Please try again.");
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <h2>🔒 System Login</h2>
-        <p className="sub">FAMILY IMBUTO Z'AGAKIZA — Admin Panel</p>
+        <h2>\uD83D\uDD12 System Login</h2>
+        <p className="sub">FAMILY IMBUTO Z'AGAKIZA \u2014 Admin Panel</p>
         <form onSubmit={submit}>
           <div className="field">
             <label htmlFor="a-user">Username</label>
@@ -112,12 +123,12 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
             <input id="a-pass" name="password" type="password" required />
           </div>
           <p className="error-text">{error}</p>
-          <button className="btn btn-primary btn-block" type="submit">
-            Login
+          <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+            {busy ? "Checking\u2026" : "Login"}
           </button>
         </form>
         <p style={{ textAlign: "center", marginTop: "1rem", fontSize: ".85rem" }}>
-          <Link to="/">← Back to website</Link>
+          <Link to="/">\u2190 Back to website</Link>
         </p>
       </div>
     </div>
@@ -140,10 +151,22 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const newsletter = useStore<Subscriber>("newsletter");
   const donations = useStore<Donation>("donations");
 
-  const commit = () => {
-    save(draft);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const [error, setError] = useState("");
+
+  const commit = async () => {
+    try {
+      setError("");
+      await save(draft);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+      members.reload();
+      messages.reload();
+      prayers.reload();
+      newsletter.reload();
+      donations.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save changes.");
+    }
   };
 
   const update = <K extends keyof SiteContent>(key: K, value: SiteContent[K]) =>
@@ -688,8 +711,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 onChange={(v) => update("settings", { ...draft.settings, adminPassword: v })}
               />
               <p className="empty">
-                This is a simple front-desk lock stored in this browser. For real protection with user
-                accounts, a backend is required.
+                The password is stored securely in the cloud database and checked on the server.
+                Changing it here updates it for everyone after you press Save.
               </p>
             </div>
             <div className="panel">
@@ -698,8 +721,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 className="btn btn-danger"
                 onClick={() => {
                   if (confirm("Reset all website content to the original text?")) {
-                    writeContent(defaultContent);
                     setDraft(defaultContent);
+                    void save(defaultContent);
                   }
                 }}
               >
