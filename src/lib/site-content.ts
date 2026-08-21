@@ -115,7 +115,7 @@ export const defaultContent: SiteContent = {
       "Spreading the good news of Jesus Christ, helping the needy, and building lives grounded in God.",
     verseText: "\u201cFor the Son of Man came to seek and to save the lost.\u201d",
     verseRef: "Luke 19:10",
-    adminPassword: "123456",
+    adminPassword: "",
     whatsapp: "250727777791",
     flutterwaveKey: "",
     currency: "RWF",
@@ -308,7 +308,7 @@ function mergeContent(saved: Partial<SiteContent> | null): SiteContent {
   return {
     ...defaultContent,
     ...saved,
-    settings: { ...defaultContent.settings, ...(saved.settings ?? {}) },
+    settings: { ...defaultContent.settings, ...(saved.settings ?? {}), adminPassword: "" },
     about: { ...defaultContent.about, ...(saved.about ?? {}) },
   };
 }

@@ -740,7 +740,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <button className="btn btn-outline" onClick={() => setDraft(content)}>
               Cancel
             </button>
-            {saved ? <span className="form-note">Saved — the website is updated.</span> : null}
+            {saved ? <span className="form-note">Saved \u2014 every visitor now sees this.</span> : null}
+            {error ? <span className="error-text">{error}</span> : null}
           </div>
         ) : null}
       </main>
