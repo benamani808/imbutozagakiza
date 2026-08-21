@@ -6,6 +6,8 @@ const KINDS = ["members", "messages", "prayers", "newsletter", "donations"] as c
 
 type Kind = (typeof KINDS)[number];
 
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -35,16 +37,16 @@ export const verifyAdmin = createServerFn({ method: "POST" })
   });
 
 export const saveSiteContent = createServerFn({ method: "POST" })
-  .inputValidator((input: { password: string; content: unknown }) => input)
+  .inputValidator((input: { password: string; content: Json }) => input)
   .handler(async ({ data }) => {
     const db = await assertPassword(data.password);
 
-    const content = (data.content ?? {}) as Record<string, unknown>;
-    const settings = { ...((content["settings"] as Record<string, unknown>) ?? {}) };
+    const content = (data.content ?? {}) as { [key: string]: Json };
+    const settings: { [key: string]: Json } = { ...((content["settings"] as { [key: string]: Json }) ?? {}) };
     const newPassword = String(settings["adminPassword"] ?? "").trim();
     delete settings["adminPassword"];
 
-    const payload = { ...content, settings };
+    const payload: Json = { ...content, settings };
 
     const { error } = await db
       .from("site_content")
@@ -75,13 +77,13 @@ export const listSubmissions = createServerFn({ method: "POST" })
     return (rows ?? []).map((r) => ({
       id: r.id as string,
       kind: r.kind as Kind,
-      payload: (r.payload ?? {}) as Record<string, unknown>,
+      payload: (r.payload ?? {}) as { [key: string]: Json },
       created_at: r.created_at as string,
     }));
   });
 
 export const addSubmissionAsAdmin = createServerFn({ method: "POST" })
-  .inputValidator((input: { password: string; kind: string; payload: Record<string, unknown> }) => input)
+  .inputValidator((input: { password: string; kind: string; payload: { [key: string]: Json } }) => input)
   .handler(async ({ data }) => {
     const db = await assertPassword(data.password);
     if (!KINDS.includes(data.kind as Kind)) throw new Error("Unknown record type.");
