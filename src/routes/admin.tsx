@@ -706,7 +706,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <div className="panel">
               <h3>Security</h3>
               <Text
-                label="Admin password"
+                label="New admin password (leave blank to keep the current one)"
                 value={draft.settings.adminPassword}
                 onChange={(v) => update("settings", { ...draft.settings, adminPassword: v })}
               />
