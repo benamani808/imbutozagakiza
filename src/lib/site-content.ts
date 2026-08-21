@@ -280,10 +280,28 @@ export const GALLERY_CATEGORIES = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Storage                                                             */
+/* Cloud storage (shared by every visitor)                             */
 /* ------------------------------------------------------------------ */
 
-const CONTENT_KEY = "fiz_content";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  saveSiteContent,
+  listSubmissions,
+  addSubmissionAsAdmin,
+  deleteSubmission,
+  clearSubmissions,
+} from "./site.functions";
+
+const PW_KEY = "fiz_admin_pw";
+
+export function getAdminPassword(): string {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(PW_KEY) ?? "";
+}
+
+export function setAdminPassword(pw: string) {
+  window.sessionStorage.setItem(PW_KEY, pw);
+}
 
 function mergeContent(saved: Partial<SiteContent> | null): SiteContent {
   if (!saved) return defaultContent;
@@ -295,114 +313,134 @@ function mergeContent(saved: Partial<SiteContent> | null): SiteContent {
   };
 }
 
-export function readContent(): SiteContent {
-  if (typeof window === "undefined") return defaultContent;
-  try {
-    const raw = window.localStorage.getItem(CONTENT_KEY);
-    return mergeContent(raw ? (JSON.parse(raw) as SiteContent) : null);
-  } catch {
-    return defaultContent;
-  }
+export async function fetchContent(): Promise<SiteContent> {
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("data")
+    .eq("id", "main")
+    .maybeSingle();
+  if (error || !data) return defaultContent;
+  return mergeContent(data.data as Partial<SiteContent>);
 }
 
-export function writeContent(content: SiteContent) {
-  window.localStorage.setItem(CONTENT_KEY, JSON.stringify(content));
-  window.dispatchEvent(new Event("fiz:content"));
-}
-
-/** Reads content on the client after hydration (SSR-safe). */
+/** Loads shared website content and keeps it live for every visitor. */
 export function useSiteContent() {
   const [content, setContent] = useState<SiteContent>(defaultContent);
 
   useEffect(() => {
-    setContent(readContent());
-    const sync = () => setContent(readContent());
-    window.addEventListener("fiz:content", sync);
-    window.addEventListener("storage", sync);
+    let active = true;
+    const sync = () => {
+      void fetchContent().then((c) => {
+        if (active) setContent(c);
+      });
+    };
+    sync();
+
+    const channel = supabase
+      .channel("site_content_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "site_content" },
+        () => sync(),
+      )
+      .subscribe();
+
+    window.addEventListener("focus", sync);
     return () => {
-      window.removeEventListener("fiz:content", sync);
-      window.removeEventListener("storage", sync);
+      active = false;
+      window.removeEventListener("focus", sync);
+      void supabase.removeChannel(channel);
     };
   }, []);
 
-  const save = useCallback((next: SiteContent) => {
-    writeContent(next);
-    setContent(next);
+  const save = useCallback(async (next: SiteContent) => {
+    const password = getAdminPassword();
+    const result = await saveSiteContent({
+      data: { password, content: next as unknown as Record<string, never> },
+    });
+    if (result.password) setAdminPassword(result.password);
+    setContent(mergeContent(next));
   }, []);
 
   return { content, save };
 }
 
-/* --- generic collection storage for form submissions --------------- */
+/* --- submissions -------------------------------------------------- */
 
 export const STORE_KEYS = {
-  members: "fiz_members",
-  messages: "fiz_messages",
-  prayers: "fiz_prayers",
-  newsletter: "fiz_newsletter",
-  donations: "fiz_donations",
+  members: "members",
+  messages: "messages",
+  prayers: "prayers",
+  newsletter: "newsletter",
+  donations: "donations",
 } as const;
 
 export type StoreKey = keyof typeof STORE_KEYS;
 
-export function readStore<T>(key: StoreKey): T[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(window.localStorage.getItem(STORE_KEYS[key]) ?? "[]") as T[];
-  } catch {
-    return [];
-  }
+/** Public form submissions — anyone can send these. */
+export async function addToStore<T extends { id: string }>(key: StoreKey, row: T) {
+  const { id: _id, ...payload } = row;
+  const { error } = await supabase.from("submissions").insert({
+    kind: key,
+    payload: payload as unknown as Record<string, never>,
+  });
+  if (error) throw new Error("Could not send. Please try again.");
 }
 
-export function writeStore<T>(key: StoreKey, rows: T[]) {
-  window.localStorage.setItem(STORE_KEYS[key], JSON.stringify(rows));
-  window.dispatchEvent(new Event("fiz:store"));
+type Row = { id: string; kind: StoreKey; payload: Record<string, unknown>; created_at: string };
+
+function toRow<T>(r: Row): T {
+  return { ...(r.payload as object), id: r.id, date: (r.payload["date"] as string) ?? r.created_at } as T;
 }
 
-export function addToStore<T extends { id: string }>(key: StoreKey, row: T) {
-  const rows = readStore<T>(key);
-  rows.unshift(row);
-  writeStore(key, rows);
-}
-
+/** Admin-only listing of submissions. */
 export function useStore<T extends { id: string }>(key: StoreKey) {
   const [rows, setRows] = useState<T[]>([]);
 
-  useEffect(() => {
-    const sync = () => setRows(readStore<T>(key));
-    sync();
-    window.addEventListener("fiz:store", sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener("fiz:store", sync);
-      window.removeEventListener("storage", sync);
-    };
+  const load = useCallback(async () => {
+    const password = getAdminPassword();
+    if (!password) return;
+    try {
+      const all = (await listSubmissions({ data: { password } })) as unknown as Row[];
+      setRows(all.filter((r) => r.kind === key).map((r) => toRow<T>(r)));
+    } catch {
+      /* not authorised yet */
+    }
   }, [key]);
 
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   const add = useCallback(
-    (row: T) => {
-      const next = [row, ...readStore<T>(key)];
-      writeStore(key, next);
-      setRows(next);
+    async (row: T) => {
+      const { id: _id, ...payload } = row;
+      await addSubmissionAsAdmin({
+        data: {
+          password: getAdminPassword(),
+          kind: key,
+          payload: payload as unknown as Record<string, never>,
+        },
+      });
+      await load();
     },
-    [key],
+    [key, load],
   );
 
   const remove = useCallback(
-    (id: string) => {
-      const next = readStore<T>(key).filter((r) => r.id !== id);
-      writeStore(key, next);
-      setRows(next);
+    async (id: string) => {
+      await deleteSubmission({ data: { password: getAdminPassword(), id } });
+      await load();
     },
-    [key],
+    [load],
   );
 
-  const clear = useCallback(() => {
-    writeStore(key, []);
-    setRows([]);
-  }, [key]);
+  const clear = useCallback(async () => {
+    await clearSubmissions({ data: { password: getAdminPassword(), kind: key } });
+    await load();
+  }, [key, load]);
 
-  return { rows, add, remove, clear };
+  return { rows, add, remove, clear, reload: load };
 }
 
 export const now = () => new Date().toLocaleString();
