@@ -958,13 +958,42 @@ function ListEditor<T extends { id: string }>({
 }
 
 
+/** Shrinks an uploaded photo so the shared content record stays small. */
+function downscale(file: File, max = 900): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read the image."));
+    reader.onload = () => {
+      const src = String(reader.result ?? "");
+      const img = new Image();
+      img.onerror = () => resolve(src);
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(src);
+        ctx.drawImage(img, 0, 0, w, h);
+        const out = canvas.toDataURL("image/jpeg", 0.82);
+        resolve(out.length < src.length ? out : src);
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function ImagePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const pick = (file: File | undefined) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => onChange(String(reader.result ?? ""));
-    reader.readAsDataURL(file);
+    void downscale(file)
+      .then(onChange)
+      .catch(() => alert("Could not read that image. Please try another file."));
   };
+
 
   return (
     <div style={{ display: "flex", gap: ".6rem", alignItems: "center", flexWrap: "wrap" }}>
