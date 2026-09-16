@@ -62,6 +62,7 @@ const icons: Record<string, LucideIcon> = {
   heart: Heart,
   integrity: BadgeCheck,
   leadership: UserRound,
+  lock: LockKeyhole,
   logout: DoorOpen,
   love: HeartHandshake,
   menu: Menu,
