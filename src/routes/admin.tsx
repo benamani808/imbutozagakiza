@@ -27,6 +27,7 @@ import {
   type ValueItem,
 } from "@/lib/site-content";
 import { verifyAdmin } from "@/lib/site.functions";
+import { ICON_OPTIONS, SiteIcon } from "@/components/site-icon";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -43,27 +44,29 @@ export const Route = createFileRoute("/admin")({
         property: "og:description",
         content: "Private dashboard for managing the Family Imbuto Z'Agakiza website.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AdminPage,
 });
 
 const TABS = [
-  ["overview", "📊 Overview"],
-  ["general", "🏠 Home & About"],
-  ["leaders", "👤 Leadership"],
-  ["ministries", "⛪ Ministries"],
-  ["events", "📅 Events"],
-  ["sermons", "📖 Sermons"],
-  ["gallery", "🖼️ Gallery"],
-  ["testimonies", "✨ Testimonies"],
-  ["news", "📰 News"],
-  ["members", "👥 Members"],
-  ["messages", "✉️ Messages"],
-  ["prayers", "🙏 Prayers"],
-  ["newsletter", "📧 Newsletter"],
-  ["donations", "💳 Donations"],
-  ["settings", "⚙️ Settings"],
+  ["overview", "Overview", "chart"],
+  ["general", "Home & About", "website"],
+  ["leaders", "Leadership", "leadership"],
+  ["ministries", "Ministries", "church"],
+  ["events", "Events", "calendar"],
+  ["sermons", "Sermons", "bible"],
+  ["gallery", "Gallery", "gallery"],
+  ["testimonies", "Testimonies", "sparkles"],
+  ["news", "News", "news"],
+  ["members", "Members", "users"],
+  ["messages", "Messages", "messages"],
+  ["prayers", "Prayers", "prayer"],
+  ["newsletter", "Newsletter", "email"],
+  ["donations", "Donations", "donation"],
+  ["settings", "Settings", "settings"],
 ] as const;
 
 type TabKey = (typeof TABS)[number][0];
@@ -188,17 +191,17 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <h2>Admin Panel</h2>
         <p className="sub">Imbuto Z'Agakiza</p>
         <nav className="admin-nav">
-          {TABS.map(([key, text]) => (
+          {TABS.map(([key, text, icon]) => (
             <button
               key={key}
               className={tab === key ? "active" : ""}
               onClick={() => setTab(key as TabKey)}
             >
-              {text}
+              <SiteIcon name={icon} /> {text}
             </button>
           ))}
           <Link to="/" style={{ display: "block", padding: ".6rem .8rem", color: "#fff", fontSize: ".92rem" }}>
-            🌍 View website
+            <SiteIcon name="globe" /> View website
           </Link>
           <button
             className="logout"
@@ -207,7 +210,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               onLogout();
             }}
           >
-            🚪 Logout
+            <SiteIcon name="logout" /> Logout
           </button>
         </nav>
       </aside>
@@ -215,7 +218,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <main className="admin-main">
         <header className="admin-header">
           <div>
-            <h1>{label.replace(/^\S+\s/, "")}</h1>
+            <h1>{label}</h1>
             <p>{new Date().toLocaleDateString(undefined, { dateStyle: "full" })}</p>
           </div>
         </header>
@@ -301,10 +304,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               title="Core values"
               rows={draft.values}
               onChange={(rows) => update("values", rows)}
-              blank={() => ({ id: uid(), icon: "✝️", title: "New value", text: "" })}
+              blank={() => ({ id: uid(), icon: "cross", title: "New value", text: "" })}
               titleOf={(r) => r.title}
               fields={[
-                { key: "icon", label: "Icon (emoji)" },
+                { key: "icon", label: "SVG icon", options: ICON_OPTIONS },
                 { key: "title", label: "Title" },
                 { key: "text", label: "Description" },
               ]}
@@ -317,11 +320,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             title="Leadership"
             rows={draft.leaders}
             onChange={(rows) => update("leaders", rows)}
-            blank={() => ({ id: uid(), icon: "👤", name: "New leader", role: "", bio: "" })}
+            blank={() => ({ id: uid(), icon: "user", name: "New leader", role: "", bio: "" })}
             titleOf={(r) => r.name}
             fields={[
               { key: "image", label: "Photo", image: true },
-              { key: "icon", label: "Fallback icon (emoji)" },
+              { key: "icon", label: "Fallback SVG icon", options: ICON_OPTIONS },
               { key: "name", label: "Name" },
               { key: "role", label: "Role" },
               { key: "bio", label: "Short bio", area: true },
@@ -334,10 +337,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             title="Ministries"
             rows={draft.ministries}
             onChange={(rows) => update("ministries", rows)}
-            blank={() => ({ id: uid(), icon: "⛪", title: "New ministry", text: "", items: "" })}
+            blank={() => ({ id: uid(), icon: "church", title: "New ministry", text: "", items: "" })}
             titleOf={(r) => r.title}
             fields={[
-              { key: "icon", label: "Icon (emoji)" },
+              { key: "icon", label: "SVG icon", options: ICON_OPTIONS },
               { key: "title", label: "Title" },
               { key: "text", label: "Description", area: true },
               { key: "items", label: "Bullet list (one per line)", area: true },
@@ -396,7 +399,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             title="Gallery"
             rows={draft.gallery}
             onChange={(rows) => update("gallery", rows)}
-            blank={() => ({ id: uid(), icon: "📸", caption: "New photo", category: "crusades", image: "" })}
+            blank={() => ({ id: uid(), icon: "camera", caption: "New photo", category: "crusades", image: "" })}
             titleOf={(r) => r.caption}
             fields={[
               { key: "caption", label: "Caption" },
@@ -406,7 +409,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 options: GALLERY_CATEGORIES.filter((c) => c.key !== "all").map((c) => [c.key, c.label]),
               },
               { key: "image", label: "Photo", image: true },
-              { key: "icon", label: "Fallback icon (emoji)" },
+              { key: "icon", label: "Fallback SVG icon", options: ICON_OPTIONS },
             ]}
           />
         ) : null}
