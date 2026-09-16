@@ -10,6 +10,7 @@ import {
   useSiteContent,
 } from "@/lib/site-content";
 import { payWithFlutterwave } from "@/lib/flutterwave";
+import { SiteIcon } from "@/components/site-icon";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,6 +27,8 @@ export const Route = createFileRoute("/")({
         content:
           "Gospel crusades, prayer ministries, youth mentorship and compassion outreach in Kigali, Rwanda. Join the family, watch sermons or give online.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: HomePage,
@@ -154,7 +157,7 @@ function HomePage() {
           </a>
           <nav>
             <button className="menu-toggle" onClick={() => setMenuOpen((v) => !v)} aria-label="Menu">
-              ☰
+              <SiteIcon name="menu" />
             </button>
             <ul className={menuOpen ? "nav-list open" : "nav-list"}>
               {nav.map(([hash, label]) => (
@@ -230,7 +233,7 @@ function HomePage() {
             <div className="grid grid-4">
               {content.values.map((v) => (
                 <div className="card" key={v.id}>
-                  <span className="card-icon">{v.icon}</span>
+                  <SiteIcon className="card-icon" name={v.icon} label={v.title} />
                   <h3>{v.title}</h3>
                   <p>{v.text}</p>
                 </div>
@@ -249,7 +252,7 @@ function HomePage() {
                   {l.image ? (
                     <img className="leader-photo" src={l.image} alt={l.name} loading="lazy" />
                   ) : (
-                    <span className="card-icon">{l.icon}</span>
+                    <SiteIcon className="card-icon" name={l.icon} label={l.name} />
                   )}
                   <h3>{l.name}</h3>
                   <p className="role">{l.role}</p>
@@ -267,7 +270,7 @@ function HomePage() {
             <div className="grid grid-3">
               {content.ministries.map((m) => (
                 <div className="card" key={m.id}>
-                  <span className="card-icon">{m.icon}</span>
+                  <SiteIcon className="card-icon" name={m.icon} label={m.title} />
                   <h3>{m.title}</h3>
                   {m.text ? <p>{m.text}</p> : null}
                   {m.items ? (
@@ -292,10 +295,10 @@ function HomePage() {
                 <div className="card event-card" key={ev.id}>
                   {ev.featured ? <span className="badge">Upcoming</span> : null}
                   <h3>{ev.title}</h3>
-                  <p>📅 {ev.date}</p>
-                  <p>📍 {ev.location}</p>
-                  <p>⏰ {ev.time}</p>
-                  {ev.details ? <p>🎤 {ev.details}</p> : null}
+                  <p className="icon-line"><SiteIcon name="calendar" size={16} /> {ev.date}</p>
+                  <p className="icon-line"><SiteIcon name="location" size={16} /> {ev.location}</p>
+                  <p className="icon-line"><SiteIcon name="time" size={16} /> {ev.time}</p>
+                  {ev.details ? <p className="icon-line"><SiteIcon name="microphone" size={16} /> {ev.details}</p> : null}
                   <button
                     className="btn btn-primary btn-small"
                     style={{ marginTop: "1rem" }}
@@ -328,7 +331,7 @@ function HomePage() {
             <div className="grid grid-3">
               {sermons.map((sm) => (
                 <div className="card" key={sm.id}>
-                  <div className="tile-media">📹</div>
+                  <div className="tile-media"><SiteIcon name="video" size={38} /></div>
                   <h3>{sm.title}</h3>
                   <p>{sm.text}</p>
                   {sm.link ? (
@@ -368,7 +371,7 @@ function HomePage() {
               {gallery.map((g) => (
                 <div className="card" key={g.id}>
                   <div className="tile-media">
-                    {g.image ? <img src={g.image} alt={g.caption} loading="lazy" /> : g.icon}
+                    {g.image ? <img src={g.image} alt={g.caption} loading="lazy" /> : <SiteIcon name={g.icon} label={g.caption} size={38} />}
                   </div>
                   <p>{g.caption}</p>
                 </div>
@@ -385,7 +388,7 @@ function HomePage() {
             <div className="grid grid-3">
               {content.testimonies.map((t) => (
                 <div className="card" key={t.id}>
-                  <span className="card-icon">✨</span>
+                  <SiteIcon className="card-icon" name="sparkles" />
                   <p className="quote">“{t.text}”</p>
                   <p className="role" style={{ marginTop: ".7rem" }}>
                     — {t.author}
@@ -450,25 +453,25 @@ function HomePage() {
             </p>
             <div className="grid grid-4">
               <div className="card">
-                <span className="card-icon">📱</span>
+                <SiteIcon className="card-icon" name="mobile" />
                 <h3>Mobile Money</h3>
                 <p>MTN MoMo, Airtel Money</p>
                 <span className="method-details">{s.momoCode}</span>
               </div>
               <div className="card">
-                <span className="card-icon">🏦</span>
+                <SiteIcon className="card-icon" name="bank" />
                 <h3>Bank Account</h3>
                 <p>{s.bankName}</p>
                 <span className="method-details">{s.bankAccount}</span>
               </div>
               <div className="card">
-                <span className="card-icon">🌍</span>
+                <SiteIcon className="card-icon" name="globe" />
                 <h3>Cards & Online</h3>
                 <p>Visa, Mastercard, MoMo instant</p>
                 <span className="method-details">Secure Flutterwave checkout</span>
               </div>
               <div className="card">
-                <span className="card-icon">🔄</span>
+                <SiteIcon className="card-icon" name="recurring" />
                 <h3>Monthly Partnership</h3>
                 <p>Recurring giving</p>
                 <span className="method-details">Join Imbuto Partners</span>
@@ -505,14 +508,14 @@ function HomePage() {
             <div className="grid grid-2">
               <div>
                 <div className="contact-item">
-                  <span className="icon">📍</span>
+                  <SiteIcon className="icon" name="location" />
                   <div>
                     <h3>Address</h3>
                     <p>{s.address}</p>
                   </div>
                 </div>
                 <div className="contact-item">
-                  <span className="icon">📞</span>
+                  <SiteIcon className="icon" name="phone" />
                   <div>
                     <h3>Phone</h3>
                     <p>
@@ -521,7 +524,7 @@ function HomePage() {
                   </div>
                 </div>
                 <div className="contact-item">
-                  <span className="icon">✉️</span>
+                  <SiteIcon className="icon" name="email" />
                   <div>
                     <h3>Email</h3>
                     <p>
@@ -530,14 +533,14 @@ function HomePage() {
                   </div>
                 </div>
                 <div className="contact-item">
-                  <span className="icon">🌐</span>
+                  <SiteIcon className="icon" name="globe" />
                   <div>
                     <h3>Website</h3>
                     <p>{s.website}</p>
                   </div>
                 </div>
                 <div className="contact-item">
-                  <span className="icon">🕐</span>
+                  <SiteIcon className="icon" name="time" />
                   <div>
                     <h3>Working Hours</h3>
                     <p>{s.hours}</p>
@@ -545,19 +548,19 @@ function HomePage() {
                 </div>
                 <div className="social-links">
                   <a href={s.facebook} title="Facebook">
-                    📘
+                    <SiteIcon name="facebook" />
                   </a>
                   <a href={s.youtube} title="YouTube">
-                    📺
+                    <SiteIcon name="youtube" />
                   </a>
                   <a href={s.instagram} title="Instagram">
-                    📷
+                    <SiteIcon name="instagram" />
                   </a>
                   <a href={s.tiktok} title="TikTok">
-                    🎵
+                    <SiteIcon name="music" />
                   </a>
                   <a href={`https://wa.me/${s.whatsapp}`} title="WhatsApp">
-                    💬
+                    <SiteIcon name="whatsapp" />
                   </a>
                 </div>
               </div>
@@ -654,7 +657,7 @@ function HomePage() {
         rel="noreferrer"
         aria-label="WhatsApp"
       >
-        💬
+        <SiteIcon name="whatsapp" />
       </a>
       {showTop ? (
         <button
@@ -662,7 +665,7 @@ function HomePage() {
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="Back to top"
         >
-          ↑
+          <SiteIcon name="arrowUp" />
         </button>
       ) : null}
 
