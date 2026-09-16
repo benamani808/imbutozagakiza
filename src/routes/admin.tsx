@@ -114,7 +114,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <h2>\uD83D\uDD12 System Login</h2>
+        <h2 className="login-title"><SiteIcon name="lock" /> System Login</h2>
         <p className="sub">FAMILY IMBUTO Z'AGAKIZA \u2014 Admin Panel</p>
         <form onSubmit={submit}>
           <div className="field">
