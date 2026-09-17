@@ -36,6 +36,8 @@ import {
   Settings,
   Smartphone,
   Sparkles,
+  Sun,
+  Moon,
   UserRound,
   Users,
   Video,
@@ -106,6 +108,8 @@ const icons: Record<string, LucideIcon> = {
   instagram: Instagram,
   location: MapPin,
   money: Banknote,
+  moon: Moon,
+  sun: Sun,
 };
 
 const legacyIcons: Record<string, keyof typeof icons> = {
