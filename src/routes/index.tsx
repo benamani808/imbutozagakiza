@@ -49,12 +49,26 @@ function HomePage() {
   const [contactNote, setContactNote] = useState("");
   const [newsNote, setNewsNote] = useState("");
   const [showTop, setShowTop] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
+    const savedTheme = window.localStorage.getItem("fiz-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+    document.documentElement.classList.toggle("dark", shouldUseDark);
+    setDarkMode(shouldUseDark);
+
     const onScroll = () => setShowTop(window.scrollY > 300);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const toggleTheme = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    document.documentElement.classList.toggle("dark", next);
+    window.localStorage.setItem("fiz-theme", next ? "dark" : "light");
+  };
 
   const nav: [string, string][] = [
     ["#home", "Home"],
@@ -175,6 +189,17 @@ function HomePage() {
               ))}
               <li>
                 <Link to="/admin">Admin</Link>
+              </li>
+              <li>
+                <button
+                  className="theme-toggle"
+                  type="button"
+                  onClick={toggleTheme}
+                  aria-label={darkMode ? "Use light mode" : "Use dark mode"}
+                  title={darkMode ? "Use light mode" : "Use dark mode"}
+                >
+                  <SiteIcon name={darkMode ? "sun" : "moon"} size={18} />
+                </button>
               </li>
             </ul>
           </nav>

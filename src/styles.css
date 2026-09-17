@@ -20,8 +20,8 @@
 
 @theme inline {
   --font-sans: "Manrope", sans-serif;
-  --font-display: "Cormorant Garamond", serif;
-  --font-accent: "Cinzel", serif;
+  --font-display: "Manrope", sans-serif;
+  --font-accent: "Manrope", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -167,12 +167,28 @@
   --r: 14px;
 }
 
+.dark {
+  --brand: oklch(0.79 0.105 88);
+  --brand-dark: oklch(0.14 0.035 259);
+  --brand-light: oklch(0.25 0.06 250);
+  --gold: oklch(0.8 0.12 88);
+  --gold-dark: oklch(0.74 0.12 87);
+  --ink: oklch(0.94 0.008 250);
+  --ink-muted: oklch(0.75 0.012 250);
+  --surface: oklch(0.16 0.025 258);
+  --surface-alt: oklch(0.13 0.024 258);
+  --line: oklch(1 0 0 / 0.12);
+  --shadow-sm: 0 1px 2px oklch(0.05 0.02 250 / 0.3), 0 2px 8px oklch(0.05 0.02 250 / 0.22);
+  --shadow-md: 0 8px 30px oklch(0.05 0.02 250 / 0.35);
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--ink);
   background: var(--surface);
   line-height: 1.7;
   font-weight: 400;
+  transition: color .2s ease, background-color .2s ease;
 }
 
 .container { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
@@ -181,7 +197,7 @@ body {
 .section h2 {
   font-family: var(--font-display);
   font-size: clamp(2rem, 3vw, 2.75rem);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--brand);
   text-align: center;
   letter-spacing: 0;
@@ -200,8 +216,8 @@ body {
 /* Buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  padding: .75rem 1.4rem; border-radius: 999px; border: 1px solid transparent;
-  font-family: var(--font-sans); font-weight: 800; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; text-decoration: none;
+  padding: .75rem 1.4rem; border-radius: 5px; border: 1px solid transparent;
+  font-family: var(--font-sans); font-weight: 700; font-size: .78rem; letter-spacing: 0; cursor: pointer; text-decoration: none;
   transition: transform .15s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
 }
 .btn:hover { transform: translateY(-1px); }
@@ -223,6 +239,7 @@ body {
   background: oklch(1 0 0 / .92); backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
+.dark .site-header { background: oklch(0.12 0.025 258 / .94); }
 .site-header .container { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: .9rem; }
 .brand { display: flex; align-items: center; gap: .6rem; text-decoration: none; }
 .brand-mark {
@@ -230,12 +247,17 @@ body {
   background: var(--brand); color: var(--gold); font-weight: 700;
 }
 .brand-logo { width: 42px; height: 42px; border-radius: 10px; object-fit: contain; background: transparent; }
-.brand-name { color: var(--brand); font-family: var(--font-display); font-weight: 700; font-size: 1.12rem; line-height: 1.05; }
-.brand-sub { color: var(--ink-muted); font-family: var(--font-accent); font-size: .58rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.brand-name { color: var(--brand); font-family: var(--font-display); font-weight: 800; font-size: 1.02rem; line-height: 1.05; }
+.brand-sub { color: var(--ink-muted); font-family: var(--font-accent); font-size: .6rem; font-weight: 500; letter-spacing: 0; }
 .nav-list { display: flex; align-items: center; gap: 1.1rem; list-style: none; margin: 0; padding: 0; }
-.nav-list a { color: var(--ink); text-decoration: none; font-size: .76rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.nav-list a { color: var(--ink); text-decoration: none; font-size: .82rem; font-weight: 600; letter-spacing: 0; }
 .nav-list a:hover { color: var(--gold-dark); }
 .menu-toggle { display: none; background: none; border: 0; font-size: 1.5rem; color: var(--brand); cursor: pointer; }
+.theme-toggle {
+  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid var(--line); color: var(--ink); background: var(--surface); cursor: pointer;
+}
+.theme-toggle:hover { color: var(--gold-dark); border-color: var(--gold-dark); }
 
 /* Hero */
 .hero {
@@ -245,14 +267,14 @@ body {
     radial-gradient(1000px 500px at 50% -10%, oklch(0.45 0.095 243) 0%, transparent 70%),
     linear-gradient(135deg, var(--brand-dark), var(--brand-light));
 }
-.hero h1 { font-family: var(--font-display); font-size: clamp(3rem, 6vw, 4.8rem); font-weight: 600; line-height: .98; letter-spacing: 0; margin: 0 auto; max-width: 16ch; }
+.hero h1 { font-family: var(--font-display); font-size: clamp(2.7rem, 5vw, 4.2rem); font-weight: 800; line-height: 1.05; letter-spacing: 0; margin: 0 auto; max-width: 18ch; color: var(--gold); }
 .hero .subtitle { max-width: 660px; margin: 1.25rem auto 0; color: oklch(1 0 0 / .85); font-size: 1.02rem; line-height: 1.75; }
 .verse {
   max-width: 640px; margin: 2rem auto; padding: 1.2rem 1.5rem;
   border-left: 3px solid var(--gold); background: oklch(1 0 0 / .08); border-radius: 0 var(--r) var(--r) 0;
   text-align: left;
 }
-.verse-text { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 1.25rem; line-height: 1.45; }
+.verse-text { font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 600; font-size: 1.45rem; line-height: 1.35; color: var(--gold); }
 .verse-ref { color: var(--gold); font-family: var(--font-accent); font-weight: 700; font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; margin-top: .5rem; }
 .hero-buttons { display: flex; flex-wrap: wrap; gap: .7rem; justify-content: center; margin-top: 1.5rem; }
 
@@ -358,6 +380,7 @@ body {
   font-size: 1.3rem; text-decoration: none;
 }
 .whatsapp-float { bottom: 84px; background: oklch(0.72 0.17 145); color: #fff; }
+.whatsapp-float svg { width: 25px; height: 25px; }
 .back-to-top { bottom: 20px; background: var(--brand); color: #fff; }
 
 /* ================= Admin ================= */
@@ -411,6 +434,7 @@ body {
   }
   .nav-list.open { display: flex; }
   .nav-list li { width: 100%; padding: .55rem 0; border-bottom: 1px solid var(--line); }
+  .nav-list li:last-child { border-bottom: 0; }
   .admin-shell { flex-direction: column; }
   .admin-sidebar { width: 100%; }
   .admin-nav { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); display: grid; }
