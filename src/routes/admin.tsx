@@ -145,8 +145,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [draft, setDraft] = useState<SiteContent>(content);
   const [tab, setTab] = useState<TabKey>("overview");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState(false);
 
-  useEffect(() => setDraft(content), [content]);
+  // Adopt the saved website content until the admin starts editing, so live
+  // updates never wipe out edits in progress.
+  useEffect(() => {
+    if (!touched) setDraft(content);
+  }, [content, touched]);
 
   const members = useStore<Member>("members");
   const messages = useStore<Message>("messages");
@@ -157,11 +163,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [error, setError] = useState("");
 
   const commit = async () => {
+    if (saving) return;
+    setError("");
+    setSaving(true);
     try {
-      setError("");
       await save(draft);
+      setTouched(false);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      setTimeout(() => setSaved(false), 4000);
       members.reload();
       messages.reload();
       prayers.reload();
@@ -169,6 +178,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       donations.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save changes.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -990,13 +1001,25 @@ function downscale(file: File, max = 900): Promise<string> {
 }
 
 function ImagePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const pick = (file: File | undefined) => {
-    if (!file) return;
-    void downscale(file)
-      .then(onChange)
-      .catch(() => alert("Could not read that image. Please try another file."));
-  };
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setErr("");
+    setBusy(true);
+    try {
+      const dataUrl = await downscale(file, 1400);
+      const res = await uploadSiteImage({
+        data: { password: getAdminPassword(), dataUrl, folder: "photos" },
+      });
+      onChange(res.url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not upload that image.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div style={{ display: "flex", gap: ".6rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -1007,13 +1030,20 @@ function ImagePicker({ value, onChange }: { value: string; onChange: (v: string)
           style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }}
         />
       ) : null}
-      <input type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0])} />
+      <input
+        type="file"
+        accept="image/*"
+        disabled={busy}
+        onChange={(e) => void pick(e.target.files?.[0])}
+      />
       <input
         placeholder="or paste an image URL"
         value={value.startsWith("data:") ? "" : value}
         onChange={(e) => onChange(e.target.value)}
         style={{ flex: 1, minWidth: 180 }}
       />
+      {busy ? <span style={{ fontSize: ".85rem" }}>Uploading photo...</span> : null}
+      {err ? <span style={{ fontSize: ".85rem", color: "crimson" }}>{err}</span> : null}
       {value ? (
         <button className="btn btn-outline btn-small" onClick={() => onChange("")}>
           Remove
