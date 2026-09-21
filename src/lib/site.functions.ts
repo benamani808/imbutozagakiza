@@ -109,3 +109,32 @@ export const clearSubmissions = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not clear records.");
     return { ok: true };
   });
+
+const BUCKET = "site-images";
+
+/** Stores an uploaded photo in cloud storage and returns the URL to use on the site. */
+export const uploadSiteImage = createServerFn({ method: "POST" })
+  .inputValidator((input: { password: string; dataUrl: string; folder?: string }) => input)
+  .handler(async ({ data }) => {
+    const db = await assertPassword(data.password);
+
+    const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(data.dataUrl.trim());
+    if (!match) throw new Error("That file is not a supported image.");
+    const contentType = match[1] as string;
+    const binary = match[2] as string;
+
+    const bytes = Uint8Array.from(atob(binary), (c) => c.charCodeAt(0));
+    if (bytes.byteLength > 10 * 1024 * 1024) throw new Error("That image is larger than 10MB.");
+
+    const ext = contentType.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
+    const folder = (data.folder ?? "uploads").replace(/[^a-z0-9-]/gi, "") || "uploads";
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+
+    const { error } = await db.storage.from(BUCKET).upload(path, bytes, {
+      contentType,
+      upsert: false,
+    });
+    if (error) throw new Error("Could not upload that image. Please try again.");
+
+    return { url: `/api/public/image/${path}` };
+  });

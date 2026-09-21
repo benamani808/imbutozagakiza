@@ -26,7 +26,7 @@ import {
   type Testimony,
   type ValueItem,
 } from "@/lib/site-content";
-import { verifyAdmin } from "@/lib/site.functions";
+import { uploadSiteImage, verifyAdmin } from "@/lib/site.functions";
 import { ICON_OPTIONS, SiteIcon } from "@/components/site-icon";
 
 export const Route = createFileRoute("/admin")({
@@ -127,11 +127,11 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <p className="error-text">{error}</p>
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? "Checking\u2026" : "Login"}
+            {busy ? "Checking..." : "Login"}
           </button>
         </form>
         <p style={{ textAlign: "center", marginTop: "1rem", fontSize: ".85rem" }}>
-          <Link to="/">\u2190 Back to website</Link>
+          <Link to="/">← Back to website</Link>
         </p>
       </div>
     </div>
@@ -145,8 +145,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [draft, setDraft] = useState<SiteContent>(content);
   const [tab, setTab] = useState<TabKey>("overview");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState(false);
 
-  useEffect(() => setDraft(content), [content]);
+  // Adopt the saved website content until the admin starts editing, so live
+  // updates never wipe out edits in progress.
+  useEffect(() => {
+    if (!touched) setDraft(content);
+  }, [content, touched]);
 
   const members = useStore<Member>("members");
   const messages = useStore<Message>("messages");
@@ -157,11 +163,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [error, setError] = useState("");
 
   const commit = async () => {
+    if (saving) return;
+    setError("");
+    setSaving(true);
     try {
-      setError("");
       await save(draft);
+      setTouched(false);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      setTimeout(() => setSaved(false), 4000);
       members.reload();
       messages.reload();
       prayers.reload();
@@ -169,11 +178,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       donations.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save changes.");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const update = <K extends keyof SiteContent>(key: K, value: SiteContent[K]) =>
+  const update = <K extends keyof SiteContent>(key: K, value: SiteContent[K]) => {
+    setTouched(true);
     setDraft((d) => ({ ...d, [key]: value }));
+  };
 
   const label = TABS.find(([k]) => k === tab)?.[1] ?? "";
   const isContentTab = ![
@@ -737,13 +750,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {isContentTab ? (
           <div className="save-bar">
-            <button className="btn btn-primary" onClick={commit}>
-              Save changes
+            <button className="btn btn-primary" onClick={commit} disabled={saving}>
+              {saving ? "Saving..." : "Save changes"}
             </button>
-            <button className="btn btn-outline" onClick={() => setDraft(content)}>
+            <button
+              className="btn btn-outline"
+              disabled={saving}
+              onClick={() => {
+                setDraft(content);
+                setTouched(false);
+              }}
+            >
               Cancel
             </button>
-            {saved ? <span className="form-note">Saved \u2014 every visitor now sees this.</span> : null}
+            {saved ? <span className="form-note">Saved — every visitor now sees this.</span> : null}
             {error ? <span className="error-text">{error}</span> : null}
           </div>
         ) : null}
@@ -990,13 +1010,25 @@ function downscale(file: File, max = 900): Promise<string> {
 }
 
 function ImagePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const pick = (file: File | undefined) => {
-    if (!file) return;
-    void downscale(file)
-      .then(onChange)
-      .catch(() => alert("Could not read that image. Please try another file."));
-  };
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setErr("");
+    setBusy(true);
+    try {
+      const dataUrl = await downscale(file, 1400);
+      const res = await uploadSiteImage({
+        data: { password: getAdminPassword(), dataUrl, folder: "photos" },
+      });
+      onChange(res.url);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not upload that image.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div style={{ display: "flex", gap: ".6rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -1007,13 +1039,20 @@ function ImagePicker({ value, onChange }: { value: string; onChange: (v: string)
           style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }}
         />
       ) : null}
-      <input type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0])} />
+      <input
+        type="file"
+        accept="image/*"
+        disabled={busy}
+        onChange={(e) => void pick(e.target.files?.[0])}
+      />
       <input
         placeholder="or paste an image URL"
         value={value.startsWith("data:") ? "" : value}
         onChange={(e) => onChange(e.target.value)}
         style={{ flex: 1, minWidth: 180 }}
       />
+      {busy ? <span style={{ fontSize: ".85rem" }}>Uploading photo...</span> : null}
+      {err ? <span style={{ fontSize: ".85rem", color: "crimson" }}>{err}</span> : null}
       {value ? (
         <button className="btn btn-outline btn-small" onClick={() => onChange("")}>
           Remove
