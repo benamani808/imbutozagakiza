@@ -26,7 +26,7 @@ import {
   type Testimony,
   type ValueItem,
 } from "@/lib/site-content";
-import { verifyAdmin } from "@/lib/site.functions";
+import { uploadSiteImage, verifyAdmin } from "@/lib/site.functions";
 import { ICON_OPTIONS, SiteIcon } from "@/components/site-icon";
 
 export const Route = createFileRoute("/admin")({
@@ -127,11 +127,11 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <p className="error-text">{error}</p>
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? "Checking\u2026" : "Login"}
+            {busy ? "Checking..." : "Login"}
           </button>
         </form>
         <p style={{ textAlign: "center", marginTop: "1rem", fontSize: ".85rem" }}>
-          <Link to="/">\u2190 Back to website</Link>
+          <Link to="/">← Back to website</Link>
         </p>
       </div>
     </div>
@@ -183,8 +183,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const update = <K extends keyof SiteContent>(key: K, value: SiteContent[K]) =>
+  const update = <K extends keyof SiteContent>(key: K, value: SiteContent[K]) => {
+    setTouched(true);
     setDraft((d) => ({ ...d, [key]: value }));
+  };
 
   const label = TABS.find(([k]) => k === tab)?.[1] ?? "";
   const isContentTab = ![
@@ -748,13 +750,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {isContentTab ? (
           <div className="save-bar">
-            <button className="btn btn-primary" onClick={commit}>
-              Save changes
+            <button className="btn btn-primary" onClick={commit} disabled={saving}>
+              {saving ? "Saving..." : "Save changes"}
             </button>
-            <button className="btn btn-outline" onClick={() => setDraft(content)}>
+            <button
+              className="btn btn-outline"
+              disabled={saving}
+              onClick={() => {
+                setDraft(content);
+                setTouched(false);
+              }}
+            >
               Cancel
             </button>
-            {saved ? <span className="form-note">Saved \u2014 every visitor now sees this.</span> : null}
+            {saved ? <span className="form-note">Saved — every visitor now sees this.</span> : null}
             {error ? <span className="error-text">{error}</span> : null}
           </div>
         ) : null}
