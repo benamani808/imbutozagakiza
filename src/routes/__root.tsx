@@ -77,11 +77,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Family Imbuto Z'Agakiza" },
-      { name: "description", content: "Christian organization spreading the gospel of Jesus Christ and serving the needy in Rwanda." },
-      
-      { property: "og:title", content: "Family Imbuto Z'Agakiza" },
-      { property: "og:description", content: "Christian organization spreading the gospel of Jesus Christ and serving the needy in Rwanda." },
+      { property: "og:site_name", content: "Family Imbuto Z'Agakiza" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

@@ -5,6 +5,7 @@ import {
   GALLERY_CATEGORIES,
   SERMON_CATEGORIES,
   addToStore,
+  type StoreKey,
   now,
   uid,
   useSiteContent,
@@ -28,8 +29,10 @@ export const Route = createFileRoute("/")({
           "Gospel crusades, prayer ministries, youth mentorship and compassion outreach in Kigali, Rwanda. Join the family, watch sermons or give online.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://imbutozagakiza.lovable.app/" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://imbutozagakiza.lovable.app/" }],
   }),
   component: HomePage,
 });
@@ -88,58 +91,44 @@ function HomePage() {
     if (el) window.scrollTo({ top: (el as HTMLElement).offsetTop - 70, behavior: "smooth" });
   };
 
-  const handleJoin = (e: FormEvent<HTMLFormElement>) => {
+  const [sending, setSending] = useState<Partial<Record<StoreKey, boolean>>>({});
+  const [prayerNote, setPrayerNote] = useState("");
+
+  const sendForm = async (
+    e: FormEvent<HTMLFormElement>, key: StoreKey, fields: string[],
+    setNote: (note: string) => void, success: string,
+  ) => {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    addToStore("members", {
-      id: uid(),
-      name: String(f.get("name") ?? ""),
-      email: String(f.get("email") ?? ""),
-      phone: String(f.get("phone") ?? ""),
-      location: String(f.get("location") ?? ""),
-      interest: String(f.get("interest") ?? ""),
-      date: now(),
-    });
-    e.currentTarget.reset();
-    setJoinNote("Thank you! Your membership request has been received.");
+    if (sending[key]) return;
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    setSending((current) => ({ ...current, [key]: true }));
+    setNote("Sending...");
+    try {
+      await addToStore(key, {
+        id: uid(), date: now(),
+        ...Object.fromEntries(fields.map((field) => [field, String(f.get(field) ?? "").trim()])),
+      });
+      form.reset();
+      setNote(success);
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : "Could not send. Please try again.");
+    } finally {
+      setSending((current) => ({ ...current, [key]: false }));
+    }
   };
 
-  const handleContact = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    addToStore("messages", {
-      id: uid(),
-      name: String(f.get("name") ?? ""),
-      email: String(f.get("email") ?? ""),
-      subject: String(f.get("subject") ?? ""),
-      message: String(f.get("message") ?? ""),
-      date: now(),
-    });
-    e.currentTarget.reset();
-    setContactNote("Message sent. We will get back to you soon.");
-  };
-
-  const handlePrayer = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    addToStore("prayers", {
-      id: uid(),
-      name: String(f.get("name") ?? ""),
-      email: String(f.get("email") ?? ""),
-      request: String(f.get("request") ?? ""),
-      date: now(),
-    });
-    setPrayerOpen(false);
-    alert("Your prayer request has been sent. God bless you.");
-  };
-
-  const handleNewsletter = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    addToStore("newsletter", { id: uid(), email: String(f.get("email") ?? ""), date: now() });
-    e.currentTarget.reset();
-    setNewsNote("Subscribed!");
-  };
+  const handleJoin = (e: FormEvent<HTMLFormElement>) =>
+    sendForm(e, "members", ["name", "email", "phone", "location", "interest"], setJoinNote,
+      "Thank you! Your membership request has been received.");
+  const handleContact = (e: FormEvent<HTMLFormElement>) =>
+    sendForm(e, "messages", ["name", "email", "subject", "message"], setContactNote,
+      "Message sent. We will get back to you soon.");
+  const handlePrayer = (e: FormEvent<HTMLFormElement>) =>
+    sendForm(e, "prayers", ["name", "email", "request"], setPrayerNote,
+      "Your prayer request has been sent. God bless you.");
+  const handleNewsletter = (e: FormEvent<HTMLFormElement>) =>
+    sendForm(e, "newsletter", ["email"], setNewsNote, "Subscribed!");
 
   const sermons =
     sermonCat === "all" ? content.sermons : content.sermons.filter((x) => x.category === sermonCat);
@@ -461,9 +450,9 @@ function HomePage() {
                   <option>Youth</option>
                 </select>
               </div>
-              <p className="form-note">{joinNote}</p>
-              <button className="btn btn-primary btn-block" type="submit">
-                Send request
+              <p className="form-note" role="status">{joinNote}</p>
+              <button className="btn btn-primary btn-block" type="submit" disabled={sending.members}>
+                {sending.members ? "Sending..." : "Send request"}
               </button>
             </form>
           </div>
@@ -561,7 +550,7 @@ function HomePage() {
                   <SiteIcon className="icon" name="globe" />
                   <div>
                     <h3>Website</h3>
-                    <p>{s.website}</p>
+                    <p><a href={s.website.startsWith("http") ? s.website : `https://${s.website}`} target="_blank" rel="noreferrer">{s.website}</a></p>
                   </div>
                 </div>
                 <div className="contact-item">
@@ -584,7 +573,7 @@ function HomePage() {
                   <a href={s.tiktok} title="TikTok">
                     <SiteIcon name="music" />
                   </a>
-                  <a href={`https://wa.me/${s.whatsapp}`} title="WhatsApp">
+                  <a href={`https://wa.me/${s.whatsapp.replace(/\D/g, "")}`} title="WhatsApp">
                     <SiteIcon name="whatsapp" />
                   </a>
                 </div>
@@ -606,10 +595,10 @@ function HomePage() {
                   <label htmlFor="c-msg">Message</label>
                   <textarea id="c-msg" name="message" rows={5} required />
                 </div>
-                <p className="form-note">{contactNote}</p>
-                <button className="btn btn-primary btn-block" type="submit">
-                  Send Message
-                </button>
+                <p className="form-note" role="status">{contactNote}</p>
+                <button className="btn btn-primary btn-block" type="submit" disabled={sending.messages}>
+                  {sending.messages ? "Sending..." : "Send Message"}
+              </button>
               </form>
             </div>
             {s.mapEmbed ? (
@@ -666,7 +655,7 @@ function HomePage() {
                   Subscribe
                 </button>
               </form>
-              <p className="form-note">{newsNote}</p>
+              <p className="form-note" role="status">{newsNote}</p>
             </div>
           </div>
           <div className="footer-bottom">
@@ -677,7 +666,7 @@ function HomePage() {
 
       <a
         className="float-btn whatsapp-float"
-        href={`https://wa.me/${s.whatsapp}`}
+        href={`https://wa.me/${s.whatsapp.replace(/\D/g, "")}`}
         target="_blank"
         rel="noreferrer"
         aria-label="WhatsApp"
@@ -716,8 +705,9 @@ function HomePage() {
                 <label htmlFor="p-req">Your prayer request</label>
                 <textarea id="p-req" name="request" rows={5} required />
               </div>
-              <button className="btn btn-primary btn-block" type="submit">
-                Send Request
+              <p className="form-note" role="status">{prayerNote}</p>
+              <button className="btn btn-primary btn-block" type="submit" disabled={sending.prayers}>
+                {sending.prayers ? "Sending..." : "Send Request"}
               </button>
             </form>
           </div>
@@ -743,7 +733,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
 
     if (!s.flutterwaveKey) {
       setNote(
-        "Online payment is not configured yet. Add your Flutterwave public key in the Admin panel → Settings, or use the MoMo code above.",
+        "Online payments are currently unavailable. Please use the MoMo code above or contact us for bank transfer details.",
       );
       return;
     }
@@ -763,20 +753,20 @@ function DonateModal({ onClose }: { onClose: () => void }) {
       if (!result) {
         setNote("Payment window closed before completing.");
       } else {
-        addToStore("donations", {
+        await addToStore("donations", {
           id: uid(),
           name,
           email,
           amount,
           currency: s.currency,
           reference: result.reference,
-          status: result.status,
+          status: result.status === "successful" ? "reported_successful" : result.status,
           date: now(),
         });
-        setNote(`Thank you ${name}! Payment ${result.status}. Ref: ${result.reference}`);
+        setNote(`Payment reported ${result.status}. Ref: ${result.reference}. The ministry will confirm receipt.`);
       }
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Payment failed. Please try again.");
+      setNote(err instanceof Error ? err.message : "We could not confirm this payment. Contact us before trying again.");
     } finally {
       setBusy(false);
     }

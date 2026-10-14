@@ -54,10 +54,11 @@ export const saveSiteContent = createServerFn({ method: "POST" })
     if (error) throw new Error("Could not save website content.");
 
     if (newPassword && newPassword !== data.password) {
-      await db
+      const { error: passwordError } = await db
         .from("admin_config")
         .update({ password: newPassword, updated_at: new Date().toISOString() })
         .eq("id", ADMIN_ID);
+      if (passwordError) throw new Error("Website content saved, but the password could not be changed. Your previous password still works.");
       return { ok: true, password: newPassword };
     }
 
