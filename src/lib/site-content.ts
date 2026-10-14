@@ -142,56 +142,56 @@ export const defaultContent: SiteContent = {
       "Proclaim the good news of Jesus Christ\nPray and equip people with God's word\nEngage in acts of love and compassion\nSupport youth and families\nBuild fellowship among believers",
   },
   values: [
-    { id: uid(), icon: "\u271D\uFE0F", title: "Faith", text: "Trusting God in everything" },
-    { id: uid(), icon: "\u2764\uFE0F", title: "Love", text: "Loving God and people" },
-    { id: uid(), icon: "\u2B50", title: "Holiness", text: "Living set apart" },
-    { id: uid(), icon: "\uD83E\uDD1D", title: "Service", text: "Serving others" },
-    { id: uid(), icon: "\uD83D\uDC65", title: "Unity", text: "One family in Christ" },
-    { id: uid(), icon: "\u2713", title: "Integrity", text: "Honesty in all things" },
+    { id: "default-1", icon: "\u271D\uFE0F", title: "Faith", text: "Trusting God in everything" },
+    { id: "default-2", icon: "\u2764\uFE0F", title: "Love", text: "Loving God and people" },
+    { id: "default-3", icon: "\u2B50", title: "Holiness", text: "Living set apart" },
+    { id: "default-4", icon: "\uD83E\uDD1D", title: "Service", text: "Serving others" },
+    { id: "default-5", icon: "\uD83D\uDC65", title: "Unity", text: "One family in Christ" },
+    { id: "default-6", icon: "\u2713", title: "Integrity", text: "Honesty in all things" },
   ],
   leaders: [
     {
-      id: uid(),
+      id: "default-7",
       icon: "\uD83D\uDC64",
       name: "NIYITANGA FABRICE",
       role: "Founder & President",
       bio: "Founder and President of Family Imbuto Z'Agakiza",
     },
     {
-      id: uid(),
+      id: "default-8",
       icon: "\uD83D\uDC64",
       name: "S. MUHOZA JEANCHRISOSTOME",
       role: "Vice President",
       bio: "",
     },
-    { id: uid(), icon: "\uD83D\uDCCB", name: "Secretariat", role: "Secretaries", bio: "" },
-    { id: uid(), icon: "\uD83D\uDCB0", name: "Finance Department", role: "Finance Officers", bio: "" },
-    { id: uid(), icon: "\uD83D\uDCE2", name: "Evangelism Team", role: "Evangelists", bio: "" },
+    { id: "default-9", icon: "\uD83D\uDCCB", name: "Secretariat", role: "Secretaries", bio: "" },
+    { id: "default-10", icon: "\uD83D\uDCB0", name: "Finance Department", role: "Finance Officers", bio: "" },
+    { id: "default-11", icon: "\uD83D\uDCE2", name: "Evangelism Team", role: "Evangelists", bio: "" },
   ],
   ministries: [
     {
-      id: uid(),
+      id: "default-12",
       icon: "\uD83D\uDCE2",
       title: "Evangelism",
       text: "Preaching the Gospel in churches, streets, and crusades.",
       items: "",
     },
     {
-      id: uid(),
+      id: "default-13",
       icon: "\uD83D\uDE4F",
       title: "Prayer Ministries",
       text: "",
       items: "Night vigils\nPrayers for the sick\nPrayers for families\nPrayers for youth",
     },
     {
-      id: uid(),
+      id: "default-14",
       icon: "\uD83C\uDFB5",
       title: "Worship Ministries",
       text: "Worship and praise songs to honor God.",
       items: "",
     },
     {
-      id: uid(),
+      id: "default-15",
       icon: "\uD83D\uDC9D",
       title: "Compassion & Outreach",
       text: "",
@@ -199,7 +199,7 @@ export const defaultContent: SiteContent = {
         "Visiting orphans\nVisiting the sick\nSupporting the needy\nProviding school supplies",
     },
     {
-      id: uid(),
+      id: "default-16",
       icon: "\uD83D\uDC65",
       title: "Youth Ministries",
       text: "",
@@ -208,7 +208,7 @@ export const defaultContent: SiteContent = {
   ],
   events: [
     {
-      id: uid(),
+      id: "default-17",
       title: "JESUS IS REAL GOSPEL CRUSADE",
       date: "16 August 2026",
       location: "Kigali Great Hotel, Kiyovu",
@@ -219,7 +219,7 @@ export const defaultContent: SiteContent = {
   ],
   sermons: [
     {
-      id: uid(),
+      id: "default-18",
       title: "Jeremiah 1:5",
       text: "Life and God's Purpose",
       category: "video",
@@ -227,33 +227,33 @@ export const defaultContent: SiteContent = {
     },
   ],
   gallery: [
-    { id: uid(), icon: "\uD83D\uDCF8", caption: "Crusade Event", category: "crusades", image: "" },
-    { id: uid(), icon: "\uD83D\uDE4F", caption: "Prayer Meeting", category: "prayer", image: "" },
-    { id: uid(), icon: "\uD83C\uDFB5", caption: "Worship Service", category: "worship", image: "" },
-    { id: uid(), icon: "\uD83D\uDC9D", caption: "Charity Work", category: "charity", image: "" },
+    { id: "default-19", icon: "\uD83D\uDCF8", caption: "Crusade Event", category: "crusades", image: "" },
+    { id: "default-20", icon: "\uD83D\uDE4F", caption: "Prayer Meeting", category: "prayer", image: "" },
+    { id: "default-21", icon: "\uD83C\uDFB5", caption: "Worship Service", category: "worship", image: "" },
+    { id: "default-22", icon: "\uD83D\uDC9D", caption: "Charity Work", category: "charity", image: "" },
   ],
   testimonies: [
     {
-      id: uid(),
+      id: "default-23",
       text: "After joining the prayer sessions of Family Imbuto Z'Agakiza, God healed my illness and granted me peace.",
       author: "Member Testimony",
     },
   ],
   news: [
     {
-      id: uid(),
+      id: "default-24",
       date: "Aug 2026",
       title: "Conference Announcement",
       text: "The annual leadership conference is approaching soon.",
     },
     {
-      id: uid(),
+      id: "default-25",
       date: "Jul 2026",
       title: "New Prayer Program",
       text: "Weekly prayer sessions have launched this month.",
     },
     {
-      id: uid(),
+      id: "default-26",
       date: "Jul 2026",
       title: "Mission Report",
       text: "Outcomes from our recent outreach mission.",
@@ -337,7 +337,7 @@ export function useSiteContent() {
     sync();
 
     const channel = supabase
-      .channel("site_content_changes")
+      .channel(`site_content_${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "site_content" },
@@ -396,15 +396,17 @@ function toRow<T>(r: Row): T {
 /** Admin-only listing of submissions. */
 export function useStore<T extends { id: string }>(key: StoreKey) {
   const [rows, setRows] = useState<T[]>([]);
+  const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     const password = getAdminPassword();
     if (!password) return;
     try {
       const all = (await listSubmissions({ data: { password } })) as unknown as Row[];
+      setError("");
       setRows(all.filter((r) => r.kind === key).map((r) => toRow<T>(r)));
-    } catch {
-      /* not authorised yet */
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load records.");
     }
   }, [key]);
 
@@ -429,8 +431,12 @@ export function useStore<T extends { id: string }>(key: StoreKey) {
 
   const remove = useCallback(
     async (id: string) => {
-      await deleteSubmission({ data: { password: getAdminPassword(), id } });
-      await load();
+      try {
+        await deleteSubmission({ data: { password: getAdminPassword(), id } });
+        await load();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not delete record.");
+      }
     },
     [load],
   );
@@ -440,7 +446,7 @@ export function useStore<T extends { id: string }>(key: StoreKey) {
     await load();
   }, [key, load]);
 
-  return { rows, add, remove, clear, reload: load };
+  return { rows, error, add, remove, clear, reload: load };
 }
 
 export const now = () => new Date().toLocaleString();

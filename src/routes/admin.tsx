@@ -45,8 +45,10 @@ export const Route = createFileRoute("/admin")({
         content: "Private dashboard for managing the Family Imbuto Z'Agakiza website.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://imbutozagakiza.lovable.app/admin" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://imbutozagakiza.lovable.app/admin" }],
   }),
   component: AdminPage,
 });
@@ -115,7 +117,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
     <div className="login-wrap">
       <div className="login-card">
         <h2 className="login-title"><SiteIcon name="lock" /> System Login</h2>
-        <p className="sub">FAMILY IMBUTO Z'AGAKIZA \u2014 Admin Panel</p>
+        <p className="sub">FAMILY IMBUTO Z'AGAKIZA — Admin Panel</p>
         <form onSubmit={submit}>
           <div className="field">
             <label htmlFor="a-user">Username</label>
@@ -162,12 +164,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const [error, setError] = useState("");
 
-  const commit = async () => {
+  const commit = async (next: SiteContent = draft) => {
     if (saving) return;
     setError("");
     setSaving(true);
+    setSaved(false);
     try {
-      await save(draft);
+      await save(next);
       setTouched(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 4000);
@@ -220,6 +223,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             className="logout"
             onClick={() => {
               sessionStorage.removeItem("fiz_admin");
+              setAdminPassword("");
               onLogout();
             }}
           >
@@ -235,6 +239,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <p>{new Date().toLocaleDateString(undefined, { dateStyle: "full" })}</p>
           </div>
         </header>
+
+        {[members.error, messages.error, prayers.error, newsletter.error, donations.error].find(Boolean) ? (
+          <p className="error-text" role="alert">{[members.error, messages.error, prayers.error, newsletter.error, donations.error].find(Boolean)}</p>
+        ) : null}
 
         {tab === "overview" ? (
           <>
@@ -735,10 +743,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <h3>Danger zone</h3>
               <button
                 className="btn btn-danger"
+                disabled={saving}
                 onClick={() => {
                   if (confirm("Reset all website content to the original text?")) {
                     setDraft(defaultContent);
-                    void save(defaultContent);
+                    setTouched(true);
+                    void commit(defaultContent);
                   }
                 }}
               >
@@ -750,7 +760,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {isContentTab ? (
           <div className="save-bar">
-            <button className="btn btn-primary" onClick={commit} disabled={saving}>
+            <button className="btn btn-primary" onClick={() => void commit()} disabled={saving}>
               {saving ? "Saving..." : "Save changes"}
             </button>
             <button
@@ -820,8 +830,8 @@ function Text({
 }) {
   return (
     <div className="field">
-      <label>{label}</label>
-      <input value={value} onChange={(e) => onChange(e.target.value)} />
+      <label htmlFor={label}>{label}</label>
+      <input id={label} value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
@@ -839,8 +849,8 @@ function Area({
 }) {
   return (
     <div className="field">
-      <label>{label}</label>
-      <textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} />
+      <label htmlFor={label}>{label}</label>
+      <textarea id={label} rows={rows} value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
@@ -876,8 +886,10 @@ function ListEditor<T extends { id: string }>({
     const next = [...rows];
     const target = index + dir;
     if (target < 0 || target >= next.length) return;
-    const a = next[index]!;
-    next[index] = next[target]!;
+    const a = next[index];
+    const other = next[target];
+    if (!a || !other) return;
+    next[index] = other;
     next[target] = a;
     onChange(next);
   };
@@ -1071,21 +1083,32 @@ function QuickAdd({
 }: {
   fields: QuickField[];
   submitLabel: string;
-  onAdd: (values: Record<string, string>) => void;
+  onAdd: (values: Record<string, string>) => void | Promise<void>;
 }) {
   const initial = () =>
     Object.fromEntries(fields.map((f) => [f.key, f.initial ?? ""])) as Record<string, string>;
   const [values, setValues] = useState<Record<string, string>>(initial);
 
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const set = (key: string, v: string) => setValues((s) => ({ ...s, [key]: v }));
 
   return (
     <form
       className="field-grid"
-      onSubmit={(e: FormEvent) => {
+      onSubmit={async (e: FormEvent) => {
         e.preventDefault();
-        onAdd(values);
-        setValues(initial());
+        if (busy) return;
+        setBusy(true);
+        setError("");
+        try {
+          await onAdd(values);
+          setValues(initial());
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Could not add record.");
+        } finally {
+          setBusy(false);
+        }
       }}
     >
       {fields.map((f) =>
@@ -1100,8 +1123,9 @@ function QuickAdd({
           <Text key={f.key} label={f.label} value={values[f.key] ?? ""} onChange={(v) => set(f.key, v)} />
         ),
       )}
-      <button className="btn btn-primary" type="submit" style={{ gridColumn: "1 / -1" }}>
-        {submitLabel}
+      {error ? <p className="error-text" role="alert">{error}</p> : null}
+      <button className="btn btn-primary" type="submit" disabled={busy} style={{ gridColumn: "1 / -1" }}>
+        {busy ? "Saving..." : submitLabel}
       </button>
     </form>
   );

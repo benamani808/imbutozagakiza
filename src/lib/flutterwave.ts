@@ -55,7 +55,7 @@ export async function payWithFlutterwave(
   const checkout = window.FlutterwaveCheckout;
   if (!checkout) throw new Error("Flutterwave checkout is unavailable.");
 
-  const reference = `FIZ-${Date.now()}`;
+  const reference = `FIZ-${crypto.randomUUID()}`;
 
   return new Promise<DonationResult | null>((resolve) => {
     let settled = false;
@@ -78,7 +78,7 @@ export async function payWithFlutterwave(
         settled = true;
         modal.close();
         resolve({
-          status: response.status ?? "completed",
+          status: response.status ?? "unknown",
           reference: response.tx_ref ?? reference,
         });
       },
