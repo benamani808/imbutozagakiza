@@ -1,4 +1,5 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, test } from "node:test";
+import { strict as assert } from "node:assert";
 import { payWithFlutterwave } from "./flutterwave";
 
 const payload = { publicKey: "test", name: "Test", email: "test@example.org", amount: 5000, currency: "RWF", title: "Ministry" };
@@ -17,5 +18,5 @@ test("missing payment status must not be reported as completed", async () => {
   const callback = options["callback"];
   if (typeof callback !== "function") throw new Error("Checkout callback missing");
   callback({});
-  expect((await result)?.status).toBe("unknown");
+  assert.equal((await result)?.status, "unknown");
 });
