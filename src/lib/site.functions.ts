@@ -66,14 +66,16 @@ export const saveSiteContent = createServerFn({ method: "POST" })
   });
 
 export const listSubmissions = createServerFn({ method: "POST" })
-  .inputValidator((input: { password: string }) => input)
+  .inputValidator((input: { password: string; kind?: Kind }) => input)
   .handler(async ({ data }) => {
     const db = await assertPassword(data.password);
-    const { data: rows, error } = await db
+    let query = db
       .from("submissions")
       .select("id, kind, payload, created_at")
       .order("created_at", { ascending: false })
       .limit(1000);
+    if (data.kind) query = query.eq("kind", data.kind);
+    const { data: rows, error } = await query;
     if (error) throw new Error("Could not load submissions.");
     return (rows ?? []).map((r) => ({
       id: r.id as string,

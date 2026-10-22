@@ -402,7 +402,7 @@ export function useStore<T extends { id: string }>(key: StoreKey) {
     const password = getAdminPassword();
     if (!password) return;
     try {
-      const all = (await listSubmissions({ data: { password } })) as unknown as Row[];
+      const all = (await listSubmissions({ data: { password, kind: key } })) as unknown as Row[];
       setError("");
       setRows(all.filter((r) => r.kind === key).map((r) => toRow<T>(r)));
     } catch (err) {
@@ -412,6 +412,8 @@ export function useStore<T extends { id: string }>(key: StoreKey) {
 
   useEffect(() => {
     void load();
+    window.addEventListener("focus", load);
+    return () => window.removeEventListener("focus", load);
   }, [load]);
 
   const add = useCallback(

@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/public/image/$")({
     handlers: {
       GET: async ({ params }) => {
         const path = String((params as { _splat?: string })._splat ?? "").replace(/^\/+/, "");
-        if (!path || path.includes("..")) return new Response("Not found", { status: 404 });
+        if (!/^[a-zA-Z0-9_/-]+\.[a-zA-Z0-9]+$/.test(path) || path.includes("..")) return new Response("Not found", { status: 404 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin.storage.from(BUCKET).download(path);
@@ -15,7 +15,8 @@ export const Route = createFileRoute("/api/public/image/$")({
 
         return new Response(await data.arrayBuffer(), {
           headers: {
-            "Content-Type": data.type || "image/jpeg",
+            "Content-Type": data.type && data.type !== "application/octet-stream" ? data.type : "image/jpeg",
+            "X-Content-Type-Options": "nosniff",
             "Cache-Control": "public, max-age=31536000, immutable",
           },
         });

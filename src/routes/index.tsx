@@ -651,8 +651,8 @@ function HomePage() {
               <p>Subscribe to receive the latest updates</p>
               <form className="newsletter-form" onSubmit={handleNewsletter}>
                 <input name="email" type="email" placeholder="Enter your email" required />
-                <button className="btn btn-gold" type="submit">
-                  Subscribe
+                <button className="btn btn-gold" type="submit" disabled={sending.newsletter}>
+                  {sending.newsletter ? "Sending..." : "Subscribe"}
                 </button>
               </form>
               <p className="form-note" role="status">{newsNote}</p>
