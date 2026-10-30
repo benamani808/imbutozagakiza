@@ -11,6 +11,7 @@ import {
   useSiteContent,
 } from "@/lib/site-content";
 import { payWithFlutterwave } from "@/lib/flutterwave";
+import { recordDonation } from "@/lib/site.functions";
 import { SiteIcon } from "@/components/site-icon";
 
 export const Route = createFileRoute("/")({
@@ -782,19 +783,19 @@ function DonateModal({ onClose }: { onClose: () => void }) {
 
         <h4 style={{ color: "var(--brand)", marginBottom: ".4rem" }}>1. MoMo Pay Direct</h4>
         <p style={{ fontSize: ".9rem", color: "var(--ink-muted)", marginBottom: ".6rem" }}>
-          Kanda kodo ikurikira kuri telefone yawe:
+          Dial this code on your phone:
         </p>
         <div className="code-box">{s.momoCode}</div>
 
         <hr className="divider" />
 
         <h4 style={{ color: "var(--brand)", marginBottom: ".6rem" }}>
-          2. Kwishyura online (Cards / MoMo instant)
+          2. Pay online (Card / Mobile Money)
         </h4>
         <form onSubmit={submit}>
           <div className="field-grid">
             <div className="field">
-              <label htmlFor="d-name">Izina ryawe</label>
+              <label htmlFor="d-name">Your name</label>
               <input id="d-name" name="name" required />
             </div>
             <div className="field">
@@ -802,7 +803,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
               <input id="d-email" name="email" type="email" required />
             </div>
             <div className="field">
-              <label htmlFor="d-phone">Telefone</label>
+              <label htmlFor="d-phone">Phone</label>
               <input id="d-phone" name="phone" />
             </div>
             <div className="field">
@@ -810,9 +811,9 @@ function DonateModal({ onClose }: { onClose: () => void }) {
               <input id="d-amount" name="amount" type="number" min="100" defaultValue={5000} required />
             </div>
           </div>
-          <p className="form-note">{note}</p>
+          <p className="form-note" role="status">{note}</p>
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? "Processing…" : "Kwishyura ako kanya"}
+            {busy ? "Processing…" : "Pay now"}
           </button>
         </form>
       </div>
