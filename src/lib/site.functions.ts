@@ -130,7 +130,7 @@ export const recordDonation = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { classifyDonation } = await import("./donation-status");
     let verification: { status?: string; amount?: number; currency?: string } | null = null;
-    const secret = process.env.FLUTTERWAVE_SECRET_KEY;
+    const secret = process.env["FLUTTERWAVE_SECRET_KEY"];
     if (secret && data.checkoutStatus !== null) {
       try {
         const res = await fetch(
