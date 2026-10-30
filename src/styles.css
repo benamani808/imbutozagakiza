@@ -450,3 +450,9 @@ body {
   display: block;
   border: 3px solid var(--brand-gold, #d4af37);
 }
+
+.status-pill { display:inline-block; padding:.15rem .55rem; border-radius:999px; font-size:.75rem; font-weight:700; white-space:nowrap; }
+.status-ok { background: color-mix(in oklch, oklch(0.6 0.15 150) 18%, transparent); color: oklch(0.45 0.13 150); }
+.status-wait { background: color-mix(in oklch, var(--gold) 22%, transparent); color: oklch(0.5 0.1 75); }
+.status-bad { background: color-mix(in oklch, oklch(0.6 0.2 25) 16%, transparent); color: oklch(0.5 0.18 25); }
+.status-muted { background: color-mix(in oklch, var(--ink-muted) 15%, transparent); color: var(--ink-muted); }

@@ -83,7 +83,7 @@ export async function payWithFlutterwave(
         });
       },
       onclose: () => {
-        if (!settled) resolve(null);
+        if (!settled) resolve({ status: "cancelled", reference });
       },
     });
   });

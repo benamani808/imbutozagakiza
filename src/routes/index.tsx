@@ -751,20 +751,20 @@ function DonateModal({ onClose }: { onClose: () => void }) {
         title: s.siteName,
       });
       if (!result) {
-        setNote("Payment window closed before completing.");
-      } else {
-        await addToStore("donations", {
-          id: uid(),
-          name,
-          email,
-          amount,
-          currency: s.currency,
-          reference: result.reference,
-          status: result.status === "successful" ? "reported_successful" : result.status,
-          date: now(),
-        });
-        setNote(`Payment reported ${result.status}. Ref: ${result.reference}. The ministry will confirm receipt.`);
+        setNote("Payment window closed before completing. No money was taken.");
+        return;
       }
+      const checkoutStatus = result.status === "cancelled" ? null : result.status;
+      const { status } = await recordDonation({
+        data: { name, email, amount, currency: s.currency, reference: result.reference, checkoutStatus },
+      });
+      const messages: Record<string, string> = {
+        confirmed: `Thank you! Your gift of ${amount} ${s.currency} is confirmed. Ref: ${result.reference}.`,
+        unverified: `Thank you! Your payment was received and is awaiting confirmation by the ministry. Ref: ${result.reference}.`,
+        cancelled: "Payment cancelled. No money was taken.",
+        failed: `Payment did not go through. Please try again or use MoMo. Ref: ${result.reference}.`,
+      };
+      setNote(messages[status] ?? messages["failed"] ?? "");
     } catch (err) {
       setNote(err instanceof Error ? err.message : "We could not confirm this payment. Contact us before trying again.");
     } finally {
@@ -778,7 +778,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
         <button className="modal-close" onClick={onClose} aria-label="Close">
           ×
         </button>
-        <h3>Hitamo uburyo bwo gutanga impano</h3>
+        <h3>Choose how to give</h3>
 
         <h4 style={{ color: "var(--brand)", marginBottom: ".4rem" }}>1. MoMo Pay Direct</h4>
         <p style={{ fontSize: ".9rem", color: "var(--ink-muted)", marginBottom: ".6rem" }}>
