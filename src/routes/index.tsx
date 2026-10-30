@@ -9,6 +9,7 @@ import {
   now,
   uid,
   useSiteContent,
+  type SiteContent,
 } from "@/lib/site-content";
 import { payWithFlutterwave } from "@/lib/flutterwave";
 import { recordDonation } from "@/lib/site.functions";
