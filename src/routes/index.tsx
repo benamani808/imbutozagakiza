@@ -684,7 +684,7 @@ function HomePage() {
         </button>
       ) : null}
 
-      {donateOpen ? <DonateModal onClose={() => setDonateOpen(false)} /> : null}
+      {donateOpen ? <DonateModal settings={content.settings} onClose={() => setDonateOpen(false)} /> : null}
 
       {prayerOpen ? (
         <div className="modal-backdrop" onClick={() => setPrayerOpen(false)}>
@@ -718,9 +718,7 @@ function HomePage() {
   );
 }
 
-function DonateModal({ onClose }: { onClose: () => void }) {
-  const { content } = useSiteContent();
-  const s = content.settings;
+function DonateModal({ settings: s, onClose }: { settings: SiteContent["settings"]; onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
 
