@@ -1,3 +1,4 @@
+import { isConfirmed, statusLabel } from "@/lib/donation-status";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -253,8 +254,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <Stat num={newsletter.rows.length} label="Subscribers" />
               <Stat num={donations.rows.length} label="Donations" />
               <Stat
-                num={donations.rows.reduce((sum, d) => sum + Number(d.amount || 0), 0)}
-                label={`Total given (${content.settings.currency})`}
+                num={donations.rows.filter((d) => isConfirmed(d.status)).reduce((sum, d) => sum + Number(d.amount || 0), 0)}
+                label={`Confirmed gifts (${content.settings.currency})`}
               />
             </div>
             <div className="panel">
@@ -625,7 +626,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                 d.email,
                 `${d.amount} ${d.currency}`,
                 d.reference,
-                d.status,
+                <span key={`s-${d.id}`} className={`status-pill status-${isConfirmed(d.status) ? "ok" : d.status === "cancelled" ? "muted" : d.status === "unverified" || d.status === "reported_successful" ? "wait" : "bad"}`}>{statusLabel(d.status)}</span>,
                 d.date,
                 <button key={d.id} className="btn btn-danger btn-small" onClick={() => donations.remove(d.id)}>
                   Delete
