@@ -1,25 +1,20 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { classifyDonation, isConfirmed } from "./donation-status";
+import { isPaid, momoTelHref, normalizeStatus } from "./donation-status";
 
-const base = { expectedAmount: 5000, expectedCurrency: "RWF" };
-
-test("closed checkout is cancelled", () => {
-  assert.equal(classifyDonation({ ...base, checkoutStatus: null, verification: null }), "cancelled");
+test("new donations default to pending", () => {
+  assert.equal(normalizeStatus(undefined), "pending");
+  assert.equal(normalizeStatus("something-else"), "pending");
 });
-test("verified matching payment is confirmed", () => {
-  assert.equal(classifyDonation({ ...base, checkoutStatus: "successful", verification: { status: "successful", amount: 5000, currency: "RWF" } }), "confirmed");
+test("admin statuses are kept", () => {
+  assert.equal(normalizeStatus("contacted"), "contacted");
+  assert.equal(normalizeStatus("paid"), "paid");
 });
-test("verified underpayment is failed", () => {
-  assert.equal(classifyDonation({ ...base, checkoutStatus: "successful", verification: { status: "successful", amount: 100, currency: "RWF" } }), "failed");
+test("only paid counts as money received", () => {
+  assert.equal(isPaid("pending"), false);
+  assert.equal(isPaid("contacted"), false);
+  assert.equal(isPaid("paid"), true);
 });
-test("browser-only success is not confirmed", () => {
-  assert.equal(classifyDonation({ ...base, checkoutStatus: "successful", verification: null }), "unverified");
-});
-test("failed checkout is failed", () => {
-  assert.equal(classifyDonation({ ...base, checkoutStatus: "failed", verification: null }), "failed");
-});
-test("only confirmed statuses count as received", () => {
-  assert.equal(isConfirmed("unverified"), false);
-  assert.equal(isConfirmed("confirmed"), true);
+test("MoMo dialer link encodes the hash", () => {
+  assert.equal(momoTelHref("*182*8*1*123456#"), "tel:*182*8*1*123456%23");
 });

@@ -1,4 +1,4 @@
-import { isConfirmed, statusLabel } from "@/lib/donation-status";
+import { isPaid, normalizeStatus } from "@/lib/donation-status";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -254,8 +254,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               <Stat num={newsletter.rows.length} label="Subscribers" />
               <Stat num={donations.rows.length} label="Donations" />
               <Stat
-                num={donations.rows.filter((d) => isConfirmed(d.status)).reduce((sum, d) => sum + Number(d.amount || 0), 0)}
-                label={`Confirmed gifts (${content.settings.currency})`}
+                num={donations.rows.filter((d) => isPaid(d.status)).reduce((sum, d) => sum + Number(d.amount || 0), 0)}
+                label={`Paid gifts (${content.settings.currency})`}
               />
             </div>
             <div className="panel">
@@ -600,38 +600,54 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               submitLabel="Record donation"
               fields={[
                 { key: "name", label: "Donor name" },
-                { key: "email", label: "Email" },
+                { key: "phone", label: "Phone number" },
                 { key: "amount", label: "Amount" },
-                { key: "currency", label: "Currency", initial: draft.settings.currency },
-                { key: "reference", label: "Reference (optional)" },
-                { key: "status", label: "Status", initial: "completed" },
+                { key: "message", label: "Message (optional)" },
               ]}
               onAdd={(v) =>
                 donations.add({
                   id: uid(),
-                  name: (v["name"] ?? ""),
-                  email: (v["email"] ?? ""),
-                  amount: Number((v["amount"] ?? "")) || 0,
-                  currency: (v["currency"] ?? "") || draft.settings.currency,
-                  reference: (v["reference"] ?? "") || `MANUAL-${Date.now()}`,
-                  status: (v["status"] ?? "") || "completed",
+                  name: v["name"] ?? "",
+                  phone: v["phone"] ?? "",
+                  amount: Number(v["amount"] ?? "") || 0,
+                  currency: draft.settings.currency,
+                  message: v["message"] ?? "",
+                  status: "pending",
                   date: now(),
                 })
               }
             />
+            <p className="form-note">
+              Pending: {donations.rows.filter((d) => normalizeStatus(d.status) === "pending").length} · Contacted:{" "}
+              {donations.rows.filter((d) => normalizeStatus(d.status) === "contacted").length} · Paid:{" "}
+              {donations.rows.filter((d) => normalizeStatus(d.status) === "paid").length}
+            </p>
             <Table
-              head={["Name", "Email", "Amount", "Reference", "Status", "Date", ""]}
-              rows={donations.rows.map((d) => [
-                d.name,
-                d.email,
-                `${d.amount} ${d.currency}`,
-                d.reference,
-                <span key={`s-${d.id}`} className={`status-pill status-${isConfirmed(d.status) ? "ok" : d.status === "cancelled" ? "muted" : d.status === "unverified" || d.status === "reported_successful" ? "wait" : "bad"}`}>{statusLabel(d.status)}</span>,
-                d.date,
-                <button key={d.id} className="btn btn-danger btn-small" onClick={() => donations.remove(d.id)}>
-                  Delete
-                </button>,
-              ])}
+              head={["Name", "Phone Number", "Amount", "Message", "Date", "Status", ""]}
+              rows={donations.rows.map((d) => {
+                const st = normalizeStatus(d.status);
+                return [
+                  d.name,
+                  d.phone ? <a key={`p-${d.id}`} href={`tel:${d.phone.replace(/[^+0-9]/g, "")}`}>{d.phone}</a> : d.email ?? "",
+                  `${d.amount} ${d.currency ?? ""}`,
+                  d.message ?? "",
+                  d.date,
+                  <select
+                    key={`s-${d.id}`}
+                    aria-label={`Status for ${d.name}`}
+                    className={`status-pill status-${st === "paid" ? "ok" : st === "contacted" ? "wait" : "muted"}`}
+                    value={st}
+                    onChange={(e) => void donations.setStatus(d.id, e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="paid">Paid</option>
+                  </select>,
+                  <button key={d.id} className="btn btn-danger btn-small" onClick={() => donations.remove(d.id)}>
+                    Delete
+                  </button>,
+                ];
+              })}
             />
           </div>
         ) : null}
@@ -641,11 +657,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             <div className="panel">
               <h3>Payments</h3>
               <div className="field-grid">
-                <Text
-                  label="Flutterwave public key (FLWPUBK...)"
-                  value={draft.settings.flutterwaveKey}
-                  onChange={(v) => update("settings", { ...draft.settings, flutterwaveKey: v })}
-                />
                 <Text
                   label="Currency"
                   value={draft.settings.currency}

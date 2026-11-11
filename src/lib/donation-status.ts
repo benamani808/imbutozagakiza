@@ -1,48 +1,24 @@
-export type DonationStatus = "confirmed" | "unverified" | "failed" | "cancelled";
+export const DONATION_STATUSES = ["pending", "contacted", "paid"] as const;
+export type DonationStatus = (typeof DONATION_STATUSES)[number];
 
-export type Verification = { status?: string; amount?: number; currency?: string } | null;
-
-/**
- * Decides a donation's status. Only a Flutterwave server-side verification that
- * matches the expected amount and currency counts as "confirmed".
- */
-export function classifyDonation(input: {
-  checkoutStatus: string | null;
-  expectedAmount: number;
-  expectedCurrency: string;
-  verification: Verification;
-}): DonationStatus {
-  if (input.checkoutStatus === null) return "cancelled";
-  const v = input.verification;
-  if (v) {
-    const ok =
-      v.status === "successful" &&
-      Number(v.amount) >= input.expectedAmount &&
-      String(v.currency).toUpperCase() === input.expectedCurrency.toUpperCase();
-    return ok ? "confirmed" : "failed";
-  }
-  const s = input.checkoutStatus.toLowerCase();
-  if (s === "successful" || s === "completed") return "unverified";
-  return "failed";
+/** Normalizes any stored status (including older records) to one of the three manual follow-up statuses. */
+export function normalizeStatus(status: string | undefined | null): DonationStatus {
+  const s = String(status ?? "").toLowerCase();
+  if (s === "paid" || s === "confirmed" || s === "completed") return "paid";
+  if (s === "contacted") return "contacted";
+  return "pending";
 }
 
-/** Statuses an admin can trust as money received (manual "completed" entries included). */
-export function isConfirmed(status: string): boolean {
-  return status === "confirmed" || status === "completed";
+export function isPaid(status: string): boolean {
+  return normalizeStatus(status) === "paid";
 }
 
 export function statusLabel(status: string): string {
-  switch (status) {
-    case "confirmed":
-      return "Confirmed";
-    case "completed":
-      return "Confirmed (manual)";
-    case "unverified":
-    case "reported_successful":
-      return "Awaiting verification";
-    case "cancelled":
-      return "Cancelled";
-    default:
-      return "Failed";
-  }
+  const s = normalizeStatus(status);
+  return s === "paid" ? "Paid" : s === "contacted" ? "Contacted" : "Pending";
+}
+
+/** Turns a MoMo code like *182*8*1*123456# into a dialer link (# must be encoded as %23). */
+export function momoTelHref(code: string): string {
+  return "tel:" + code.replace(/\s+/g, "").replace(/#/g, "%23");
 }

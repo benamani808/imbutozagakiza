@@ -43,7 +43,6 @@ export type SiteContent = {
     verseRef: string;
     adminPassword: string;
     whatsapp: string;
-    flutterwaveKey: string;
     currency: string;
     momoCode: string;
     bankName: string;
@@ -93,10 +92,12 @@ export type Subscriber = { id: string; email: string; date: string };
 export type Donation = {
   id: string;
   name: string;
-  email: string;
+  phone?: string;
+  email?: string;
+  message?: string;
   amount: number;
   currency: string;
-  reference: string;
+  reference?: string;
   status: string;
   date: string;
 };
@@ -117,7 +118,6 @@ export const defaultContent: SiteContent = {
     verseRef: "Luke 19:10",
     adminPassword: "",
     whatsapp: "250727777791",
-    flutterwaveKey: "",
     currency: "RWF",
     momoCode: "*182*8*1*123456#",
     bankName: "Bank of Kigali",
@@ -289,6 +289,7 @@ import {
   listSubmissions,
   addSubmissionAsAdmin,
   deleteSubmission,
+  updateDonationStatus,
   clearSubmissions,
 } from "./site.functions";
 
@@ -443,12 +444,24 @@ export function useStore<T extends { id: string }>(key: StoreKey) {
     [load],
   );
 
+  const setStatus = useCallback(
+    async (id: string, status: string) => {
+      try {
+        await updateDonationStatus({ data: { password: getAdminPassword(), id, status } });
+        await load();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not update status.");
+      }
+    },
+    [load],
+  );
+
   const clear = useCallback(async () => {
     await clearSubmissions({ data: { password: getAdminPassword(), kind: key } });
     await load();
   }, [key, load]);
 
-  return { rows, error, add, remove, clear, reload: load };
+  return { rows, error, add, remove, clear, setStatus, reload: load };
 }
 
 export const now = () => new Date().toLocaleString();

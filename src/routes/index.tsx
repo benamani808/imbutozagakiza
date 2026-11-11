@@ -11,8 +11,8 @@ import {
   useSiteContent,
   type SiteContent,
 } from "@/lib/site-content";
-import { payWithFlutterwave } from "@/lib/flutterwave";
-import { recordDonation } from "@/lib/site.functions";
+import { submitDonation } from "@/lib/site.functions";
+import { momoTelHref } from "@/lib/donation-status";
 import { SiteIcon } from "@/components/site-icon";
 
 export const Route = createFileRoute("/")({
@@ -481,10 +481,10 @@ function HomePage() {
                 <span className="method-details">{s.bankAccount}</span>
               </div>
               <div className="card">
-                <SiteIcon className="card-icon" name="globe" />
-                <h3>Cards & Online</h3>
-                <p>Visa, Mastercard, MoMo instant</p>
-                <span className="method-details">Secure Flutterwave checkout</span>
+                <SiteIcon className="card-icon" name="phone" />
+                <h3>We Call You</h3>
+                <p>Leave your number and amount</p>
+                <span className="method-details">Our team assists you</span>
               </div>
               <div className="card">
                 <SiteIcon className="card-icon" name="recurring" />
@@ -493,6 +493,7 @@ function HomePage() {
                 <span className="method-details">Join Imbuto Partners</span>
               </div>
             </div>
+            <MomoDial code={s.momoCode} />
             <div style={{ textAlign: "center", marginTop: "2rem" }}>
               <button className="btn btn-gold" onClick={() => setDonateOpen(true)}>
                 Donate Now
@@ -719,54 +720,52 @@ function HomePage() {
   );
 }
 
+function MomoDial({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
+  };
+  return (
+    <div className="momo-dial">
+      <p className="momo-label">MTN MoMo Pay Code</p>
+      <div className="code-box">{code}</div>
+      <div className="momo-actions">
+        <a className="btn btn-momo" href={momoTelHref(code)}>
+          <SiteIcon name="phone" /> Pay via MoMo Code
+        </a>
+        <button type="button" className="btn btn-outline-momo" onClick={copy}>
+          {copied ? "Copied!" : "Copy Code"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DonateModal({ settings: s, onClose }: { settings: SiteContent["settings"]; onClose: () => void }) {
   const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
+  const [done, setDone] = useState<{ name: string; amount: number } | null>(null);
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const name = String(f.get("name") ?? "");
-    const email = String(f.get("email") ?? "");
-    const phone = String(f.get("phone") ?? "");
+    const name = String(f.get("name") ?? "").trim();
+    const phone = String(f.get("phone") ?? "").trim();
     const amount = Number(f.get("amount") ?? 0);
-
-    if (!s.flutterwaveKey) {
-      setNote(
-        "Online payments are currently unavailable. Please use the MoMo code above or contact us for bank transfer details.",
-      );
-      return;
-    }
-
+    const message = String(f.get("message") ?? "").trim();
     setBusy(true);
-    setNote("");
+    setError("");
     try {
-      const result = await payWithFlutterwave({
-        publicKey: s.flutterwaveKey,
-        name,
-        email,
-        phone,
-        amount,
-        currency: s.currency,
-        title: s.siteName,
-      });
-      if (!result) {
-        setNote("Payment window closed before completing. No money was taken.");
-        return;
-      }
-      const checkoutStatus = result.status === "cancelled" ? null : result.status;
-      const { status } = await recordDonation({
-        data: { name, email, amount, currency: s.currency, reference: result.reference, checkoutStatus },
-      });
-      const messages: Record<string, string> = {
-        confirmed: `Thank you! Your gift of ${amount} ${s.currency} is confirmed. Ref: ${result.reference}.`,
-        unverified: `Thank you! Your payment was received and is awaiting confirmation by the ministry. Ref: ${result.reference}.`,
-        cancelled: "Payment cancelled. No money was taken.",
-        failed: `Payment did not go through. Please try again or use MoMo. Ref: ${result.reference}.`,
-      };
-      setNote(messages[status] ?? messages["failed"] ?? "");
+      await submitDonation({ data: { name, phone, amount, message, currency: s.currency } });
+      setDone({ name, amount });
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "We could not confirm this payment. Contact us before trying again.");
+      setError(err instanceof Error ? err.message : "We could not save your donation. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -778,43 +777,53 @@ function DonateModal({ settings: s, onClose }: { settings: SiteContent["settings
         <button className="modal-close" onClick={onClose} aria-label="Close">
           ×
         </button>
-        <h3>Choose how to give</h3>
-
-        <h4 style={{ color: "var(--brand)", marginBottom: ".4rem" }}>1. MoMo Pay Direct</h4>
-        <p style={{ fontSize: ".9rem", color: "var(--ink-muted)", marginBottom: ".6rem" }}>
-          Dial this code on your phone:
-        </p>
-        <div className="code-box">{s.momoCode}</div>
-
-        <hr className="divider" />
-
-        <h4 style={{ color: "var(--brand)", marginBottom: ".6rem" }}>
-          2. Pay online (Card / Mobile Money)
-        </h4>
-        <form onSubmit={submit}>
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="d-name">Your name</label>
-              <input id="d-name" name="name" required />
-            </div>
-            <div className="field">
-              <label htmlFor="d-email">Email</label>
-              <input id="d-email" name="email" type="email" required />
-            </div>
-            <div className="field">
-              <label htmlFor="d-phone">Phone</label>
-              <input id="d-phone" name="phone" />
-            </div>
-            <div className="field">
-              <label htmlFor="d-amount">Amount ({s.currency})</label>
-              <input id="d-amount" name="amount" type="number" min="100" defaultValue={5000} required />
-            </div>
+        {done ? (
+          <div role="status">
+            <h3>Thank you, {done.name}!</h3>
+            <p style={{ marginBottom: "1rem" }}>
+              We received your donation of <strong>{done.amount.toLocaleString()} {s.currency}</strong>. Our team will
+              call you shortly to assist you with completing your donation.
+            </p>
+            <p style={{ fontSize: ".9rem", color: "var(--ink-muted)" }}>Prefer to pay right now? Use our MoMo code:</p>
+            <MomoDial code={s.momoCode} />
+            <button className="btn btn-primary btn-block" style={{ marginTop: "1rem" }} onClick={onClose}>
+              Close
+            </button>
           </div>
-          <p className="form-note" role="status">{note}</p>
-          <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? "Processing…" : "Pay now"}
-          </button>
-        </form>
+        ) : (
+          <>
+            <h3>Make a donation</h3>
+            <p style={{ fontSize: ".9rem", color: "var(--ink-muted)", marginBottom: "1rem" }}>
+              Leave your details and our team will call you to help complete your gift.
+            </p>
+            <form onSubmit={submit}>
+              <div className="field-grid">
+                <div className="field">
+                  <label htmlFor="d-name">Full name</label>
+                  <input id="d-name" name="name" required maxLength={120} />
+                </div>
+                <div className="field">
+                  <label htmlFor="d-phone">Phone number</label>
+                  <input id="d-phone" name="phone" type="tel" required maxLength={30} pattern="[+0-9 ()-]{7,30}" placeholder="07XX XXX XXX" />
+                </div>
+                <div className="field">
+                  <label htmlFor="d-amount">Donation amount ({s.currency})</label>
+                  <input id="d-amount" name="amount" type="number" min="1" defaultValue={5000} required />
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="d-message">Message (optional)</label>
+                <textarea id="d-message" name="message" rows={3} maxLength={1000} />
+              </div>
+              {error ? <p className="form-note" role="alert" style={{ color: "var(--crimson, #b42318)" }}>{error}</p> : null}
+              <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+                {busy ? "Sending..." : "Submit donation"}
+              </button>
+            </form>
+            <hr className="divider" />
+            <MomoDial code={s.momoCode} />
+          </>
+        )}
       </div>
     </div>
   );

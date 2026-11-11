@@ -113,57 +113,52 @@ export const clearSubmissions = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Records a donation attempt; the server decides the status (never trusts the browser). */
-export const recordDonation = createServerFn({ method: "POST" })
-  .inputValidator(
-    (input: { name: string; email: string; amount: number; currency: string; reference: string; checkoutStatus: string | null }) => {
-      if (!/^FIZ-[A-Za-z0-9-]{8,64}$/.test(input.reference)) throw new Error("Invalid payment reference.");
-      if (!(Number(input.amount) > 0)) throw new Error("Invalid amount.");
-      return {
-        ...input,
-        name: String(input.name).slice(0, 200),
-        email: String(input.email).slice(0, 200),
-        currency: String(input.currency).slice(0, 8),
-      };
-    },
-  )
+/** Public donation pledge: saved as "pending" so the team can call the donor. */
+export const submitDonation = createServerFn({ method: "POST" })
+  .inputValidator((input: { name: string; phone: string; amount: number; message?: string; currency: string }) => {
+    const name = String(input.name ?? "").trim().slice(0, 120);
+    const phone = String(input.phone ?? "").trim().slice(0, 30);
+    const amount = Number(input.amount);
+    if (!name) throw new Error("Please enter your full name.");
+    if (!/^[+0-9 ()-]{7,30}$/.test(phone)) throw new Error("Please enter a valid phone number.");
+    if (!(amount > 0) || amount > 1_000_000_000) throw new Error("Please enter a valid amount.");
+    return {
+      name,
+      phone,
+      amount,
+      message: String(input.message ?? "").trim().slice(0, 1000),
+      currency: String(input.currency ?? "RWF").slice(0, 8),
+    };
+  })
   .handler(async ({ data }) => {
-    const { classifyDonation } = await import("./donation-status");
-    let verification: { status?: string; amount?: number; currency?: string } | null = null;
-    const secret = process.env["FLUTTERWAVE_SECRET_KEY"];
-    if (secret && data.checkoutStatus !== null) {
-      try {
-        const res = await fetch(
-          `https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(data.reference)}`,
-          { headers: { Authorization: `Bearer ${secret}` } },
-        );
-        const body = (await res.json()) as { data?: { status?: string; amount?: number; currency?: string } };
-        verification = body.data ?? { status: "not_found" };
-      } catch {
-        verification = null;
-      }
-    }
-    const status = classifyDonation({
-      checkoutStatus: data.checkoutStatus,
-      expectedAmount: Number(data.amount),
-      expectedCurrency: data.currency,
-      verification,
-    });
     const db = await admin();
     const { error } = await db.from("submissions").insert({
       kind: "donations",
-      payload: {
-        name: data.name,
-        email: data.email,
-        amount: Number(data.amount),
-        currency: data.currency,
-        reference: data.reference,
-        status,
-        date: new Date().toLocaleString(),
-      },
+      payload: { ...data, status: "pending", date: new Date().toLocaleString() },
     });
-    if (error) throw new Error("Payment record could not be saved.");
-    return { status };
+    if (error) throw new Error("We could not save your donation. Please try again.");
+    return { ok: true };
+  });
+
+/** Admin changes a donation's follow-up status. */
+export const updateDonationStatus = createServerFn({ method: "POST" })
+  .inputValidator((input: { password: string; id: string; status: string }) => {
+    if (!["pending", "contacted", "paid"].includes(input.status)) throw new Error("Unknown status.");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const db = await assertPassword(data.password);
+    const { data: row, error } = await db
+      .from("submissions")
+      .select("payload")
+      .eq("id", data.id)
+      .eq("kind", "donations")
+      .maybeSingle();
+    if (error || !row) throw new Error("Donation not found.");
+    const payload = { ...((row.payload ?? {}) as { [key: string]: Json }), status: data.status };
+    const { error: upErr } = await db.from("submissions").update({ payload }).eq("id", data.id);
+    if (upErr) throw new Error("Could not update the status.");
+    return { ok: true };
   });
 
 const BUCKET = "site-images";

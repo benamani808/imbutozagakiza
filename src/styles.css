@@ -456,3 +456,15 @@ body {
 .status-wait { background: color-mix(in oklch, var(--gold) 22%, transparent); color: oklch(0.5 0.1 75); }
 .status-bad { background: color-mix(in oklch, oklch(0.6 0.2 25) 16%, transparent); color: oklch(0.5 0.18 25); }
 .status-muted { background: color-mix(in oklch, var(--ink-muted) 15%, transparent); color: var(--ink-muted); }
+
+/* MoMo dialer */
+:root { --momo: oklch(0.86 0.17 92); --momo-ink: oklch(0.22 0.03 260); }
+.momo-dial { max-width: 460px; margin: 2rem auto 0; display: grid; gap: .7rem; text-align: center; }
+.momo-label { font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; }
+.momo-actions { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; }
+.btn-momo { background: var(--momo); color: var(--momo-ink); display: inline-flex; align-items: center; gap: .5rem; font-size: 1.05rem; padding: .9rem 1.5rem; text-decoration: none; box-shadow: var(--shadow-md); }
+.btn-momo:hover { filter: brightness(1.05); }
+.btn-momo svg { width: 20px; height: 20px; }
+.btn-outline-momo { background: transparent; border: 2px solid var(--momo); color: inherit; }
+.modal .momo-dial { margin-top: 0; }
+select.status-pill { border: 0; cursor: pointer; font: inherit; font-size: .8rem; font-weight: 700; }
